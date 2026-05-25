@@ -696,7 +696,6 @@ fn main() {
             app_state.user_store.clone(),
             cx,
         );
-        acp_tools::init(cx);
         zed::telemetry_log::init(cx);
         zed::remote_debug::init(cx);
         edit_prediction_ui::init(cx);
