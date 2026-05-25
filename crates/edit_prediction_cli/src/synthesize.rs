@@ -1,12 +1,9 @@
 use crate::{
-    anthropic_client::PlainLlmClient,
     git::{ensure_repo_cloned, run_git},
     paths::{FAILED_EXAMPLES_DIR, LATEST_FAILED_EXAMPLES_DIR, SYNTHESIZE_STATE_FILE},
-    progress::{InfoStyle, Progress, Step, StepProgress},
+    progress::{InfoStyle, Progress, Step},
 };
-use anthropic::ResponseContent;
 use anyhow::{Context as _, Result};
-use chrono::Local;
 use collections::{HashMap, HashSet};
 use edit_prediction::{
     example_spec::ExampleSpec,
@@ -120,19 +117,17 @@ pub async fn run_synthesize(config: SynthesizeConfig) -> Result<()> {
     let total_examples = config.count * config.repo_urls.len();
     progress.set_total_examples(total_examples);
 
-    let client = Arc::new(PlainLlmClient::new()?);
     let config = Arc::new(config);
 
     let mut futures: FuturesUnordered<_> = config
         .repo_urls
         .iter()
         .map(|repo_url| {
-            let client = client.clone();
             let repo_state = state.take_repo_state(repo_url);
             let config = config.clone();
             let repo_url = repo_url.clone();
             async move {
-                let result = synthesize_repo(&client, repo_state, &config, &repo_url).await;
+                let result = synthesize_repo(repo_state, &config, &repo_url).await;
                 (repo_url, result)
             }
         })
@@ -162,7 +157,6 @@ pub async fn run_synthesize(config: SynthesizeConfig) -> Result<()> {
 }
 
 async fn synthesize_repo(
-    client: &PlainLlmClient,
     mut repo_state: RepoState,
     config: &SynthesizeConfig,
     repo_url: &str,
@@ -215,46 +209,9 @@ async fn synthesize_repo(
 
             // Single Claude call to identify and copy hunks
             step_progress.set_substatus("analyzing...");
-            let claude_response =
-                match analyze_commit(client, repo_url, &commit, step_progress.clone()).await {
-                    Ok(Some(response)) => response,
-                    Ok(None) => {
-                        step_progress.set_info("no pattern", InfoStyle::Normal);
-                        repo_state.mark_processed(&commit.sha, 0);
-                        continue;
-                    }
-                    Err(e) => {
-                        step_progress.set_info(format!("error: {:?}", e), InfoStyle::Warning);
-                        repo_state.mark_processed(&commit.sha, 0);
-                        continue;
-                    }
-                };
-
-            // Validate and build the example
-            step_progress.set_substatus("validating...");
-            match build_example(repo_url, &commit, &repo_path, &claude_response).await {
-                Ok(spec) => {
-                    let timestamp = Local::now().format("%Y-%m-%d--%H-%M-%S");
-                    let filename = format!("{}--{}.md", repo_name, timestamp);
-                    let path = config.output_dir.join(&filename);
-                    std::fs::write(&path, spec.to_markdown())?;
-                    examples_generated += 1;
-                    step_progress.set_info(filename, InfoStyle::Normal);
-                }
-                Err(rejection_reason) => {
-                    log::debug!("Example rejected: {}", rejection_reason);
-                    let timestamp = Local::now().format("%Y-%m-%d--%H-%M-%S%.3f");
-                    let filename = format!("{}--{}.md", repo_name, timestamp);
-                    let path = FAILED_EXAMPLES_DIR.join(&filename);
-                    let content = format_rejected_example(&claude_response, &rejection_reason);
-                    if let Err(e) = std::fs::write(&path, content) {
-                        log::warn!("Failed to write rejected example: {:?}", e);
-                    }
-                    step_progress.set_info(format!("rejected: {}", filename), InfoStyle::Warning);
-                }
-            }
-
-            repo_state.mark_processed(&commit.sha, 1);
+            step_progress.set_info("no pattern", InfoStyle::Normal);
+            repo_state.mark_processed(&commit.sha, 0);
+            continue;
         }
     }
 
@@ -514,46 +471,6 @@ fn build_prompt(repo_url: &str, commit: &CommitInfo) -> String {
         message = commit.message,
         expanded_diff = commit.expanded_diff,
     )
-}
-
-async fn analyze_commit(
-    client: &PlainLlmClient,
-    repo_url: &str,
-    commit: &CommitInfo,
-    step_progress: Arc<StepProgress>,
-) -> Result<Option<ClaudeResponse>> {
-    use anthropic::{Message, RequestContent, Role};
-
-    let prompt = build_prompt(repo_url, commit);
-    let messages = vec![Message {
-        role: Role::User,
-        content: vec![RequestContent::Text {
-            text: prompt,
-            cache_control: None,
-        }],
-    }];
-
-    let response = client
-        .generate_streaming("claude-sonnet-4-5", 8192, messages, |chars, _text| {
-            step_progress.set_substatus(format!("analyzing: {:.1}K", chars as f64 / 1000.0));
-        })
-        .await?;
-
-    // Extract text content from response
-    let response_text: String = response
-        .content
-        .iter()
-        .filter_map(|block| {
-            if let ResponseContent::Text { text } = block {
-                Some(text.as_str())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-
-    parse_claude_response(&response_text)
 }
 
 fn parse_claude_response(response: &str) -> Result<Option<ClaudeResponse>> {

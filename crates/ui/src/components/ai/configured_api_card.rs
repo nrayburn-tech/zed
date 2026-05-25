@@ -88,7 +88,7 @@ impl Component for ConfiguredApiCard {
                 "With Tooltip",
                 container()
                     .child(
-                        ConfiguredApiCard::new("Anthropic API key configured")
+                        ConfiguredApiCard::new("Zed API key configured")
                             .tooltip_label("Click to reset your API key"),
                     )
                     .into_any_element(),

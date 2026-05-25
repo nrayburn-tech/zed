@@ -1,4 +1,3 @@
-use anthropic::AnthropicModelMode;
 use anyhow::{Context as _, Result, anyhow};
 use cloud_llm_client::{
     CLIENT_SUPPORTS_STATUS_MESSAGES_HEADER_NAME, CLIENT_SUPPORTS_STATUS_STREAM_ENDED_HEADER_NAME,
@@ -19,12 +18,12 @@ use http_client::{
     AsyncBody, HttpClient, HttpClientWithUrl, HttpRequestExt, Method, Response, StatusCode,
 };
 use language_model::{
-    ANTHROPIC_PROVIDER_ID, ANTHROPIC_PROVIDER_NAME, GOOGLE_PROVIDER_ID, GOOGLE_PROVIDER_NAME,
-    LanguageModel, LanguageModelCompletionError, LanguageModelCompletionEvent,
-    LanguageModelEffortLevel, LanguageModelId, LanguageModelName, LanguageModelProviderId,
-    LanguageModelProviderName, LanguageModelRequest, LanguageModelToolChoice,
-    LanguageModelToolSchemaFormat, OPEN_AI_PROVIDER_ID, OPEN_AI_PROVIDER_NAME,
-    PaymentRequiredError, RateLimiter, ZED_CLOUD_PROVIDER_ID, ZED_CLOUD_PROVIDER_NAME,
+    GOOGLE_PROVIDER_ID, GOOGLE_PROVIDER_NAME, LanguageModel, LanguageModelCompletionError,
+    LanguageModelCompletionEvent, LanguageModelEffortLevel, LanguageModelId, LanguageModelName,
+    LanguageModelProviderId, LanguageModelProviderName, LanguageModelRequest,
+    LanguageModelToolChoice, LanguageModelToolSchemaFormat, OPEN_AI_PROVIDER_ID,
+    OPEN_AI_PROVIDER_NAME, PaymentRequiredError, RateLimiter, ZED_CLOUD_PROVIDER_ID,
+    ZED_CLOUD_PROVIDER_NAME,
 };
 
 use schemars::JsonSchema;
@@ -38,7 +37,6 @@ use std::task::Poll;
 use std::time::Duration;
 use thiserror::Error;
 
-use anthropic::completion::{AnthropicEventMapper, AnthropicPromptCacheMode, into_anthropic};
 use google_ai::completion::{GoogleEventMapper, into_google};
 use open_ai::completion::{OpenAiResponseEventMapper, into_open_ai_response};
 
@@ -83,15 +81,6 @@ pub enum ModelMode {
         /// The maximum number of tokens to use for reasoning. Must be lower than the model's `max_output_tokens`.
         budget_tokens: Option<u32>,
     },
-}
-
-impl From<ModelMode> for AnthropicModelMode {
-    fn from(value: ModelMode) -> Self {
-        match value {
-            ModelMode::Default => AnthropicModelMode::Default,
-            ModelMode::Thinking { budget_tokens } => AnthropicModelMode::Thinking { budget_tokens },
-        }
-    }
 }
 
 pub struct CloudLanguageModel<TP: CloudLlmTokenProvider> {
@@ -274,7 +263,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
     fn upstream_provider_id(&self) -> LanguageModelProviderId {
         use cloud_llm_client::LanguageModelProvider::*;
         match self.model.provider {
-            Anthropic => ANTHROPIC_PROVIDER_ID,
             OpenAi => OPEN_AI_PROVIDER_ID,
             Google => GOOGLE_PROVIDER_ID,
         }
@@ -283,7 +271,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
     fn upstream_provider_name(&self) -> LanguageModelProviderName {
         use cloud_llm_client::LanguageModelProvider::*;
         match self.model.provider {
-            Anthropic => ANTHROPIC_PROVIDER_NAME,
             OpenAi => OPEN_AI_PROVIDER_NAME,
             Google => GOOGLE_PROVIDER_NAME,
         }
@@ -344,8 +331,7 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
 
     fn tool_input_format(&self) -> LanguageModelToolSchemaFormat {
         match self.model.provider {
-            cloud_llm_client::LanguageModelProvider::Anthropic
-            | cloud_llm_client::LanguageModelProvider::OpenAi => {
+            cloud_llm_client::LanguageModelProvider::OpenAi => {
                 LanguageModelToolSchemaFormat::JsonSchema
             }
             cloud_llm_client::LanguageModelProvider::Google => {
@@ -380,74 +366,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
         let enable_thinking = thinking_allowed && self.model.supports_thinking;
         let provider_name = provider_name(&self.model.provider);
         match self.model.provider {
-            cloud_llm_client::LanguageModelProvider::Anthropic => {
-                let effort = request
-                    .thinking_effort
-                    .as_ref()
-                    .and_then(|effort| anthropic::Effort::from_str(effort).ok());
-
-                let mut request = into_anthropic(
-                    request,
-                    self.model.id.to_string(),
-                    1.0,
-                    self.model.max_output_tokens as u64,
-                    if enable_thinking {
-                        AnthropicModelMode::Thinking {
-                            budget_tokens: Some(4_096),
-                        }
-                    } else {
-                        AnthropicModelMode::Default
-                    },
-                    AnthropicPromptCacheMode::Automatic,
-                );
-
-                if enable_thinking && effort.is_some() {
-                    request.thinking = Some(anthropic::Thinking::Adaptive {
-                        display: Some(anthropic::AdaptiveThinkingDisplay::Summarized),
-                    });
-                    request.output_config = Some(anthropic::OutputConfig { effort });
-                }
-
-                if !self.model.supports_fast_mode {
-                    request.speed = None;
-                }
-
-                let http_client = self.http_client.clone();
-                let token_provider = self.token_provider.clone();
-                let auth_context = token_provider.auth_context(cx);
-                let future = self.request_limiter.stream(async move {
-                    let PerformLlmCompletionResponse {
-                        response,
-                        includes_status_messages,
-                    } = Self::perform_llm_completion(
-                        &http_client,
-                        &*token_provider,
-                        auth_context,
-                        app_version,
-                        CompletionBody {
-                            thread_id,
-                            prompt_id,
-                            provider: cloud_llm_client::LanguageModelProvider::Anthropic,
-                            model: request.model.clone(),
-                            provider_request: serde_json::to_value(&request)
-                                .map_err(|e| anyhow!(e))?,
-                        },
-                    )
-                    .await
-                    .map_err(|err| match err.downcast::<ApiError>() {
-                        Ok(api_err) => anyhow!(LanguageModelCompletionError::from(api_err)),
-                        Err(err) => anyhow!(err),
-                    })?;
-
-                    let mut mapper = AnthropicEventMapper::new();
-                    Ok(map_cloud_completion_events(
-                        Box::pin(response_lines(response, includes_status_messages)),
-                        &provider_name,
-                        move |event| mapper.map_event(event),
-                    ))
-                });
-                async move { Ok(future.await?.boxed()) }.boxed()
-            }
             cloud_llm_client::LanguageModelProvider::OpenAi => {
                 let http_client = self.http_client.clone();
                 let token_provider = self.token_provider.clone();
@@ -755,7 +673,6 @@ pub fn provider_name(
     provider: &cloud_llm_client::LanguageModelProvider,
 ) -> LanguageModelProviderName {
     match provider {
-        cloud_llm_client::LanguageModelProvider::Anthropic => ANTHROPIC_PROVIDER_NAME,
         cloud_llm_client::LanguageModelProvider::OpenAi => OPEN_AI_PROVIDER_NAME,
         cloud_llm_client::LanguageModelProvider::Google => GOOGLE_PROVIDER_NAME,
     }

@@ -8,7 +8,6 @@
 
 use crate::{
     BatchProvider, PredictionProvider,
-    anthropic_client::AnthropicClient,
     example::{ActualCursor, Example, ExamplePrediction},
     format_prompt::TeacherPrompt,
     metrics::count_patch_token_changes,
@@ -72,8 +71,8 @@ pub struct RepairArgs {
     #[clap(long, default_value = "2")]
     pub confidence_threshold: u8,
 
-    /// Which LLM provider to use (anthropic or openai)
-    #[clap(long, default_value = "anthropic")]
+    /// Which LLM provider to use (openai)
+    #[clap(long, default_value = "openai")]
     pub backend: BatchProvider,
     /// Wait for all batches to complete before exiting
     #[clap(long)]
@@ -82,7 +81,6 @@ pub struct RepairArgs {
 
 fn model_for_backend(backend: BatchProvider) -> &'static str {
     match backend {
-        BatchProvider::Anthropic => "claude-sonnet-4-6",
         BatchProvider::Openai => "gpt-5.2",
     }
 }
@@ -263,8 +261,6 @@ fn has_successful_repair(example: &Example) -> bool {
         .any(|p| p.provider == PredictionProvider::Repair && p.actual_patch.is_some())
 }
 
-static ANTHROPIC_CLIENT_BATCH: OnceLock<AnthropicClient> = OnceLock::new();
-static ANTHROPIC_CLIENT_PLAIN: OnceLock<AnthropicClient> = OnceLock::new();
 static OPENAI_CLIENT_BATCH: OnceLock<OpenAiClient> = OnceLock::new();
 static OPENAI_CLIENT_PLAIN: OnceLock<OpenAiClient> = OnceLock::new();
 
@@ -316,59 +312,6 @@ pub async fn run_repair(
     step_progress.set_substatus("generating");
 
     let response = match args.backend {
-        BatchProvider::Anthropic => {
-            let client = if args.no_batch {
-                ANTHROPIC_CLIENT_PLAIN.get_or_init(|| {
-                    AnthropicClient::plain().expect("Failed to create Anthropic client")
-                })
-            } else {
-                ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
-                    AnthropicClient::batch(&LLM_CACHE_DB)
-                        .expect("Failed to create Anthropic client")
-                })
-            };
-
-            let messages = vec![
-                // Turn 1: Original teacher prompt
-                anthropic::Message {
-                    role: anthropic::Role::User,
-                    content: vec![anthropic::RequestContent::Text {
-                        text: teacher_prompt.input.clone(),
-                        cache_control: None,
-                    }],
-                },
-                // Turn 2: Original teacher response
-                anthropic::Message {
-                    role: anthropic::Role::Assistant,
-                    content: vec![anthropic::RequestContent::Text {
-                        text: teacher_response.clone(),
-                        cache_control: None,
-                    }],
-                },
-                // Turn 3: Repair critique and instructions
-                anthropic::Message {
-                    role: anthropic::Role::User,
-                    content: vec![anthropic::RequestContent::Text {
-                        text: repair_message,
-                        cache_control: None,
-                    }],
-                },
-            ];
-
-            let Some(response) = client.generate(model, 16384, messages, None, false).await? else {
-                return Ok(());
-            };
-
-            response
-                .content
-                .iter()
-                .filter_map(|c| match c {
-                    anthropic::ResponseContent::Text { text } => Some(text.as_str()),
-                    _ => None,
-                })
-                .collect::<Vec<_>>()
-                .join("")
-        }
         BatchProvider::Openai => {
             let client = if args.no_batch {
                 OPENAI_CLIENT_PLAIN
@@ -453,12 +396,6 @@ pub async fn sync_batches(args: &RepairArgs) -> Result<()> {
     }
 
     match args.backend {
-        BatchProvider::Anthropic => {
-            let client = ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
-                AnthropicClient::batch(&LLM_CACHE_DB).expect("Failed to create Anthropic client")
-            });
-            client.sync_batches().await?;
-        }
         BatchProvider::Openai => {
             let client = OPENAI_CLIENT_BATCH.get_or_init(|| {
                 OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
@@ -517,12 +454,6 @@ pub async fn wait_for_batches(args: &RepairArgs) -> Result<()> {
 
 fn pending_batch_count(args: &RepairArgs) -> Result<usize> {
     match args.backend {
-        BatchProvider::Anthropic => {
-            let client = ANTHROPIC_CLIENT_BATCH.get_or_init(|| {
-                AnthropicClient::batch(&LLM_CACHE_DB).expect("Failed to create Anthropic client")
-            });
-            client.pending_batch_count()
-        }
         BatchProvider::Openai => {
             let client = OPENAI_CLIENT_BATCH.get_or_init(|| {
                 OpenAiClient::batch(&LLM_CACHE_DB).expect("Failed to create OpenAI client")
@@ -574,10 +505,7 @@ mod tests {
                     editable_region_offset: Some(4),
                 }),
                 error: None,
-                provider: PredictionProvider::Teacher(
-                    TeacherBackend::Sonnet45,
-                    ZetaFormat::default(),
-                ),
+                provider: PredictionProvider::Teacher(TeacherBackend::Gpt52, ZetaFormat::default()),
                 cumulative_logprob: None,
                 avg_logprob: None,
             }],

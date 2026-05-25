@@ -1,6 +1,6 @@
 ---
 title: LLM Providers - Use Your Own API Keys in Zed
-description: Bring your own API keys to Zed. Set up Anthropic, OpenAI, Google AI, Ollama, Mistral, OpenRouter, Vercel AI Gateway, and more.
+description: Bring your own API keys to Zed. Set up OpenAI, Google AI, Ollama, Mistral, OpenRouter, Vercel AI Gateway, and more.
 ---
 
 # LLM Providers
@@ -13,8 +13,7 @@ have for the supported providers. For general AI setup, see [Configuration](./co
 
 ## Use Your Own Keys {#use-your-own-keys}
 
-If you already have an API key for a provider like Anthropic or OpenAI, you can add it to Zed. No Zed subscription
-required.
+If you already have an API key for a provider like OpenAI, you can add it to Zed. No Zed subscription required.
 
 To add an existing API key to a given provider, go to the Agent Panel settings ({#action agent::OpenSettings}), look for
 the desired provider, paste the key into the input, and hit enter.
@@ -26,7 +25,6 @@ the desired provider, paste the key into the input, and hit enter.
 
 Zed supports these providers with your own API keys:
 
-- [Anthropic](#anthropic)
 - [ChatGPT Subscription](#chatgpt-subscription)
 - [GitHub Copilot Chat](#github-copilot-chat)
 - [Google AI](#google-ai)
@@ -38,61 +36,6 @@ Zed supports these providers with your own API keys:
 - [OpenCode](#opencode)
 - [OpenRouter](#openrouter)
 - [Vercel AI Gateway](#vercel-ai-gateway)
-
-### Anthropic {#anthropic}
-
-You can use Anthropic models by choosing them via the model dropdown in the Agent Panel.
-
-1. Sign up for Anthropic and [create an API key](https://console.anthropic.com/settings/keys)
-2. Make sure that your Anthropic account has credits
-3. Open the settings view ({#action agent::OpenSettings}) and go to the Anthropic section
-4. Enter your Anthropic API key
-
-Even if you pay for Claude Pro, you will still have
-to [pay for additional credits](https://console.anthropic.com/settings/plans) to use it via the API.
-
-Zed will also use the `ANTHROPIC_API_KEY` environment variable if it's defined.
-
-#### Custom Models {#anthropic-custom-models}
-
-You can add custom models to the Anthropic provider by adding the following to your Zed settings file
-([how to edit](../configuring-zed.md#settings-files)):
-
-```json [settings]
-{
-  "language_models": {
-    "anthropic": {
-      "available_models": [
-        {
-          "name": "claude-3-5-sonnet-20240620",
-          "display_name": "Sonnet 2024-June",
-          "max_tokens": 128000,
-          "max_output_tokens": 2560,
-          "tool_override": "some-model-that-supports-toolcalling"
-        }
-      ]
-    }
-  }
-}
-```
-
-Custom models will be listed in the model dropdown in the Agent Panel.
-
-You can configure a model to
-use [extended thinking](https://docs.anthropic.com/en/docs/about-claude/models/extended-thinking-models) (if it supports
-it) by changing the mode in your model's configuration to `thinking`, for example:
-
-```json
-{
-  "name": "claude-sonnet-4-latest",
-  "display_name": "claude-sonnet-4-thinking",
-  "max_tokens": 200000,
-  "mode": {
-    "type": "thinking",
-    "budget_tokens": 4096
-  }
-}
-```
 
 ### ChatGPT Subscription {#chatgpt-subscription}
 
@@ -558,7 +501,7 @@ The available configuration options for custom models are:
 - `display_name` (optional): human-readable model name shown in the UI, for example `Custom GLM 9000`
 - `max_tokens` (required): maximum model context window size, for example `1000000`
 - `max_output_tokens` (optional): maximum tokens the model can generate, for example `64000`
-- `protocol` (required): model API protocol, one of `"anthropic"`, `"openai_responses"`, `"openai_chat"`, or `"google"`
+- `protocol` (required): model API protocol, one of `"openai_responses"`, `"openai_chat"`, or `"google"`
 - `reasoning_effort_levels` (optional): list of supported reasoning effort levels, for example
   `["low", "medium", "high"]`. The latest value in the list is used as the default
 - `interleaved_reasoning` (optional, default `false`): if thinking tokens are sent as a dedicated `reasoning_content`
@@ -651,7 +594,7 @@ the `provider` object on each model entry.
 
 Supported fields (all optional):
 
-- `order`: Array of provider slugs to try first, in order (e.g. `["anthropic", "openai"]`)
+- `order`: Array of provider slugs to try first, in order (e.g. `["openai"]`)
 - `allow_fallbacks` (default: `true`): Whether fallback providers may be used if preferred ones are unavailable
 - `require_parameters` (default: `false`): Only use providers that support every parameter you supplied
 - `data_collection` (default: `allow`): `"allow"` or `"disallow"` (controls use of providers that may store data)
@@ -675,13 +618,11 @@ Example adding routing preferences to a model:
           "supports_tools": true,
           "provider": {
             "order": [
-              "anthropic",
               "openai"
             ],
             "allow_fallbacks": true,
             "require_parameters": true,
             "only": [
-              "anthropic",
               "openai",
               "google"
             ],

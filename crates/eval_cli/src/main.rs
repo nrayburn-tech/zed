@@ -47,10 +47,7 @@ use feature_flags::FeatureFlagAppExt as _;
 
 use futures::{FutureExt, select_biased};
 use gpui::{AppContext as _, AsyncApp, Entity, UpdateGlobal};
-use language_model::{
-    ANTHROPIC_PROVIDER_ID, LanguageModel, LanguageModelId, LanguageModelProviderId,
-    LanguageModelRegistry, SelectedModel,
-};
+use language_model::{LanguageModel, LanguageModelId, LanguageModelRegistry, SelectedModel};
 use project::Project;
 use settings::SettingsStore;
 use util::path_list::PathList;
@@ -290,8 +287,7 @@ async fn wait_for_model(selected: &SelectedModel, cx: &mut AsyncApp) -> Result<(
                 .available_models(cx)
                 .any(|model| model.provider_id() == selected.provider)
         });
-        let should_wait_for_discovery =
-            selected.provider == ANTHROPIC_PROVIDER_ID || !selected_provider_has_models;
+        let should_wait_for_discovery = !selected_provider_has_models;
 
         if !should_wait_for_discovery || started_at.elapsed() >= MODEL_DISCOVERY_TIMEOUT {
             return Err(cx.update(|cx| model_not_found_error(&selected_model_name(selected), cx)));
@@ -337,56 +333,17 @@ fn find_available_model(
         .into_iter()
         .filter(|model| {
             model.provider_id() == selected.provider
-                && model_id_matches_selected(&model.provider_id(), &model.id(), &selected.model)
+                && model_id_matches_selected(&model.id(), &selected.model)
         })
         .max_by(|left, right| left.id().0.to_string().cmp(&right.id().0.to_string()))
 }
 
-fn model_id_matches_selected(
-    provider_id: &LanguageModelProviderId,
-    available: &LanguageModelId,
-    selected: &LanguageModelId,
-) -> bool {
+fn model_id_matches_selected(available: &LanguageModelId, selected: &LanguageModelId) -> bool {
     if available == selected {
         return true;
     }
 
-    if provider_id != &ANTHROPIC_PROVIDER_ID {
-        return false;
-    }
-
-    anthropic_model_ids_match(available.0.as_ref(), selected.0.as_ref())
-}
-
-fn anthropic_model_ids_match(available: &str, selected: &str) -> bool {
-    let available = anthropic_model_alias_base(available);
-    let selected = anthropic_model_alias_base(selected);
-
-    available == selected || anthropic_dated_model_id_matches_base(available, selected)
-}
-
-fn anthropic_model_alias_base(mut model_id: &str) -> &str {
-    if let Some(stripped) = model_id.strip_suffix("-latest") {
-        model_id = stripped;
-    }
-    if let Some(stripped) = model_id.strip_suffix("-thinking") {
-        model_id = stripped;
-    }
-    if let Some(stripped) = model_id.strip_suffix("-1m-context") {
-        model_id = stripped;
-    }
-    model_id
-}
-
-fn anthropic_dated_model_id_matches_base(available: &str, selected: &str) -> bool {
-    let Some(suffix) = available.strip_prefix(selected) else {
-        return false;
-    };
-    let Some(date) = suffix.strip_prefix('-') else {
-        return false;
-    };
-
-    date.len() == 8 && date.chars().all(|character| character.is_ascii_digit())
+    false
 }
 
 fn selected_model_name(selected: &SelectedModel) -> String {
@@ -415,7 +372,6 @@ mod tests {
     #[test]
     fn anthropic_latest_alias_matches_listed_base_model() {
         assert!(model_id_matches_selected(
-            &ANTHROPIC_PROVIDER_ID,
             &LanguageModelId("claude-sonnet-4-6".into()),
             &LanguageModelId("claude-sonnet-4-6-latest".into()),
         ));
@@ -424,7 +380,6 @@ mod tests {
     #[test]
     fn anthropic_thinking_alias_matches_listed_base_model() {
         assert!(model_id_matches_selected(
-            &ANTHROPIC_PROVIDER_ID,
             &LanguageModelId("claude-sonnet-4-6".into()),
             &LanguageModelId("claude-sonnet-4-6-1m-context-thinking-latest".into()),
         ));
@@ -433,7 +388,6 @@ mod tests {
     #[test]
     fn anthropic_latest_alias_matches_listed_dated_model() {
         assert!(model_id_matches_selected(
-            &ANTHROPIC_PROVIDER_ID,
             &LanguageModelId("claude-sonnet-4-6-20260518".into()),
             &LanguageModelId("claude-sonnet-4-6-latest".into()),
         ));
@@ -442,7 +396,6 @@ mod tests {
     #[test]
     fn non_anthropic_models_require_exact_ids() {
         assert!(!model_id_matches_selected(
-            &LanguageModelProviderId("other".into()),
             &LanguageModelId("claude-sonnet-4-6".into()),
             &LanguageModelId("claude-sonnet-4-6-latest".into()),
         ));

@@ -18,8 +18,7 @@ If you're using the Agent Panel for the first time, you need to have at least on
 configured. You can do that by:
 
 1. [subscribing to our Pro plan](https://zed.dev/pricing), so you have access to our hosted models
-2. [using your own API keys](./llm-providers.md#use-your-own-keys), either from model providers like Anthropic or model
-   gateways like OpenRouter.
+2. [using your own API keys](./llm-providers.md#use-your-own-keys), either from model gateways like OpenRouter.
 3. using an [external agent](./external-agents.md) like [Gemini CLI](./external-agents.md#gemini-cli)
    or [Claude Agent](./external-agents.md#claude-agent)
 
@@ -266,7 +265,7 @@ project, or `~/.pi/agent/extensions/zed-bell.ts` to use it globally:
 ```ts
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-export default function (pi: ExtensionAPI) {
+export default function(pi: ExtensionAPI) {
   pi.on("agent_end", async () => {
     process.stdout.write("\x07");
   });
@@ -309,7 +308,7 @@ item in the `+` menu in the message editor.
 ### Images as Context
 
 It's also possible to attach images in your prompt for providers that support vision models. OpenAI GPT-4o and later,
-Anthropic Claude 3 and later, and Google Gemini 1.5 and 2.0 all support image inputs.
+and Google Gemini 1.5 and 2.0 all support image inputs.
 
 To add an image, you can either search in your project's directory by @-mentioning it, or drag it from your file system
 directly into the agent panel message editor. Copying an image and pasting it is also supported.
@@ -331,7 +330,7 @@ through [Zed's hosted models](./models.md)—you can switch between their models
 message editor or by using the {#kb agent::ToggleModelSelector} keybinding.
 
 > The same model can be offered via multiple providers - for example, Claude Sonnet 4.5 is available via Zed Pro,
-> OpenRouter, Anthropic directly, and more.
+> OpenRouter and more.
 > Make sure you've selected the correct model **_provider_** for the model you'd like to use, delineated by the logo to
 > the left of the model in the model selector.
 

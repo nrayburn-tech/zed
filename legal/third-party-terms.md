@@ -11,10 +11,6 @@ the [Zed End User Terms](/terms) and [Zed Privacy Policy](/privacy-policy).
 
 These policies may be updated from time to time by the applicable provider.
 
-## Anthropic
-
-- [Anthropic Usage Policy](https://www.anthropic.com/legal/aup)
-
 ## GitHub
 
 - [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies)

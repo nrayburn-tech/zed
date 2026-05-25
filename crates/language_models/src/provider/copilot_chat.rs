@@ -2,7 +2,6 @@ use std::pin::Pin;
 use std::str::FromStr as _;
 use std::sync::Arc;
 
-use anthropic::AnthropicModelMode;
 use anyhow::{Result, anyhow};
 use collections::HashMap;
 use copilot::{GlobalCopilotAuth, Status};
@@ -31,7 +30,6 @@ use settings::SettingsStore;
 use ui::prelude::*;
 use util::debug_panic;
 
-use crate::provider::anthropic::{AnthropicEventMapper, AnthropicPromptCacheMode, into_anthropic};
 use language_model::util::{fix_streamed_json, parse_tool_arguments};
 
 const PROVIDER_ID: LanguageModelProviderId = LanguageModelProviderId::new("copilot_chat");
@@ -267,9 +265,7 @@ impl LanguageModel for CopilotChatLanguageModel {
 
     fn tool_input_format(&self) -> LanguageModelToolSchemaFormat {
         match self.model.vendor() {
-            ModelVendor::OpenAI | ModelVendor::Anthropic => {
-                LanguageModelToolSchemaFormat::JsonSchema
-            }
+            ModelVendor::OpenAI => LanguageModelToolSchemaFormat::JsonSchema,
             ModelVendor::Google | ModelVendor::Unknown => {
                 LanguageModelToolSchemaFormat::JsonSchemaSubset
             }
@@ -323,90 +319,6 @@ impl LanguageModel for CopilotChatLanguageModel {
             | CompletionIntent::CreateFile
             | CompletionIntent::EditFile => false,
         });
-
-        if self.model.supports_messages() {
-            let location = intent_to_chat_location(request.intent);
-            let model = self.model.clone();
-            let request_limiter = self.request_limiter.clone();
-            let future = cx.spawn(async move |cx| {
-                let effort = request
-                    .thinking_effort
-                    .as_ref()
-                    .and_then(|e| anthropic::Effort::from_str(e).ok());
-
-                let mut anthropic_request = into_anthropic(
-                    request,
-                    model.id().to_string(),
-                    0.0,
-                    model.max_output_tokens() as u64,
-                    if model.supports_adaptive_thinking() {
-                        AnthropicModelMode::Thinking {
-                            budget_tokens: None,
-                        }
-                    } else if model.supports_thinking() {
-                        AnthropicModelMode::Thinking {
-                            budget_tokens: compute_thinking_budget(
-                                model.min_thinking_budget(),
-                                model.max_thinking_budget(),
-                                model.max_output_tokens() as u32,
-                            ),
-                        }
-                    } else {
-                        AnthropicModelMode::Default
-                    },
-                    AnthropicPromptCacheMode::Legacy,
-                );
-
-                anthropic_request.temperature = None;
-
-                // The Copilot proxy doesn't support eager_input_streaming on tools.
-                for tool in &mut anthropic_request.tools {
-                    tool.eager_input_streaming = false;
-                }
-
-                if model.supports_adaptive_thinking() {
-                    if anthropic_request.thinking.is_some() {
-                        anthropic_request.thinking = Some(anthropic::Thinking::Adaptive {
-                            display: Some(anthropic::AdaptiveThinkingDisplay::Summarized),
-                        });
-                        anthropic_request.output_config =
-                            effort.map(|effort| anthropic::OutputConfig {
-                                effort: Some(effort),
-                            });
-                    }
-                }
-
-                let anthropic_beta =
-                    if !model.supports_adaptive_thinking() && model.supports_thinking() {
-                        Some("interleaved-thinking-2025-05-14".to_string())
-                    } else {
-                        None
-                    };
-
-                let body = serde_json::to_string(&anthropic::StreamingRequest {
-                    base: anthropic_request,
-                    stream: true,
-                })
-                .map_err(|e| anyhow::anyhow!(e))?;
-
-                let stream = CopilotChat::stream_messages(
-                    body,
-                    location,
-                    is_user_initiated,
-                    anthropic_beta,
-                    cx.clone(),
-                );
-
-                request_limiter
-                    .stream(async move {
-                        let events = stream.await?;
-                        let mapper = AnthropicEventMapper::new();
-                        Ok(mapper.map_stream(events).boxed())
-                    })
-                    .await
-            });
-            return async move { Ok(future.await?.boxed()) }.boxed();
-        }
 
         if self.model.supports_response() {
             let location = intent_to_chat_location(request.intent);

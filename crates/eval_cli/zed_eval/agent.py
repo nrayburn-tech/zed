@@ -378,7 +378,6 @@ class ZedAgent(BaseInstalledAgent):
 
         provider = self.model_name.split("/", 1)[0]
         provider_env_map = {
-            "anthropic": "ANTHROPIC_API_KEY",
             "openai": "OPENAI_API_KEY",
             "google": "GEMINI_API_KEY",
             "gemini": "GEMINI_API_KEY",

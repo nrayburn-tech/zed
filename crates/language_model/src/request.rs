@@ -3,17 +3,12 @@ use std::sync::Arc;
 
 use anyhow::{Result, anyhow};
 use base64::{Engine as _, write::EncoderWriter};
-use gpui::{
-    App, AppContext as _, DevicePixels, Image, ImageFormat, ObjectFit, Size, Task, point, px, size,
-};
+use gpui::{App, AppContext as _, DevicePixels, Image, ImageFormat, Size, Task};
 use image::GenericImageView as _;
 use image::codecs::png::PngEncoder;
 use util::ResultExt;
 
 use language_model_core::{ImageSize, LanguageModelImage};
-
-/// Anthropic wants uploaded images to be smaller than this in both dimensions.
-const ANTHROPIC_SIZE_LIMIT: f32 = 1568.;
 
 /// Default per-image hard limit (in bytes) for the encoded image payload we send upstream.
 ///
@@ -68,29 +63,7 @@ impl LanguageModelImageExt for LanguageModelImage {
 fn language_model_image_from_dynamic_image(
     dynamic_image: image::DynamicImage,
 ) -> Result<Option<LanguageModelImage>> {
-    let width = dynamic_image.width();
-    let height = dynamic_image.height();
-    let image_size = size(DevicePixels(width as i32), DevicePixels(height as i32));
-
-    // First apply any provider-specific dimension constraints we know about (Anthropic).
-    let mut processed_image = if image_size.width.0 > ANTHROPIC_SIZE_LIMIT as i32
-        || image_size.height.0 > ANTHROPIC_SIZE_LIMIT as i32
-    {
-        let new_bounds = ObjectFit::ScaleDown.get_bounds(
-            gpui::Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size: size(px(ANTHROPIC_SIZE_LIMIT), px(ANTHROPIC_SIZE_LIMIT)),
-            },
-            image_size,
-        );
-        dynamic_image.resize(
-            new_bounds.size.width.into(),
-            new_bounds.size.height.into(),
-            image::imageops::FilterType::Triangle,
-        )
-    } else {
-        dynamic_image
-    };
+    let mut processed_image = dynamic_image;
 
     // Then enforce a default per-image size cap on the encoded PNG bytes.
     //

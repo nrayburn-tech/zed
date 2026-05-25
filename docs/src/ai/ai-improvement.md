@@ -15,9 +15,9 @@ AI features in Zed include:
 - Auto Git Commit Message Generation
 
 By default, Zed does not store your prompts or code context. This data is sent to your selected AI provider (e.g.,
-Anthropic, OpenAI, or Google) to generate responses, then discarded. Zed will not use your data to evaluate or improve
-AI features unless you explicitly share it (see [AI Feedback with Ratings](#ai-feedback-with-ratings)) or you opt in to
-edit prediction training data collection (see [Edit Predictions](#edit-predictions)).
+OpenAI, or Google) to generate responses, then discarded. Zed will not use your data to evaluate or improve AI features
+unless you explicitly share it (see [AI Feedback with Ratings](#ai-feedback-with-ratings)) or you opt in to edit
+prediction training data collection (see [Edit Predictions](#edit-predictions)).
 
 Zed is model-agnostic by design, and none of this changes based on which provider you choose. You can use your own API
 keys or Zed's hosted models without any data being retained.
@@ -33,11 +33,10 @@ Zed's Agent Panel can be used via:
 When using Zed's hosted models, we require assurances from our service providers that your user content won't be used
 for training models.
 
-| Provider  | No Training Guarantee                                   | Zero-Data Retention (ZDR)                                                                                                                     |
-|-----------|---------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| Anthropic | [Yes](https://www.anthropic.com/legal/commercial-terms) | [Yes](https://privacy.anthropic.com/en/articles/8956058-i-have-a-zero-data-retention-agreement-with-anthropic-what-products-does-it-apply-to) |
-| Google    | [Yes](https://cloud.google.com/terms/service-terms)     | [Yes](https://cloud.google.com/terms/service-terms), see Service Terms sections 17 and 19h                                                    |
-| OpenAI    | [Yes](https://openai.com/enterprise-privacy/)           | [Yes](https://platform.openai.com/docs/guides/your-data)                                                                                      |
+| Provider | No Training Guarantee                               | Zero-Data Retention (ZDR)                                                                  |
+|----------|-----------------------------------------------------|--------------------------------------------------------------------------------------------|
+| Google   | [Yes](https://cloud.google.com/terms/service-terms) | [Yes](https://cloud.google.com/terms/service-terms), see Service Terms sections 17 and 19h |
+| OpenAI   | [Yes](https://openai.com/enterprise-privacy/)       | [Yes](https://platform.openai.com/docs/guides/your-data)                                   |
 
 When you use your own API keys or external agents, **Zed does not have control over how your data is used by that
 service provider.**

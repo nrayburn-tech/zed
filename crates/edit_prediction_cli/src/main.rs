@@ -1,4 +1,3 @@
-mod anthropic_client;
 mod distill;
 mod example;
 mod filter_languages;
@@ -319,17 +318,13 @@ struct EvalArgs {
 
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash)]
 pub enum TeacherBackend {
-    Sonnet46,
     #[default]
-    Sonnet45,
     Gpt52,
 }
 
 impl std::fmt::Display for TeacherBackend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TeacherBackend::Sonnet46 => write!(f, "sonnet46"),
-            TeacherBackend::Sonnet45 => write!(f, "sonnet45"),
             TeacherBackend::Gpt52 => write!(f, "gpt52"),
         }
     }
@@ -340,10 +335,7 @@ impl std::str::FromStr for TeacherBackend {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "sonnet45" | "sonnet" | "claude" => Ok(TeacherBackend::Sonnet45),
-            "sonnet46" => Ok(TeacherBackend::Sonnet46),
             "gpt52" | "gpt" | "openai" => Ok(TeacherBackend::Gpt52),
-            "v0114180editableregion" => Ok(TeacherBackend::Sonnet45),
             _ => anyhow::bail!(
                 "unknown teacher backend `{s}`. Valid options: sonnet45, sonnet46, gpt52"
             ),
@@ -354,8 +346,6 @@ impl std::str::FromStr for TeacherBackend {
 impl TeacherBackend {
     pub fn model_name(&self) -> &'static str {
         match self {
-            TeacherBackend::Sonnet45 => "claude-sonnet-4-5",
-            TeacherBackend::Sonnet46 => "claude-sonnet-4-6",
             TeacherBackend::Gpt52 => "gpt-5.2",
         }
     }
@@ -522,17 +512,16 @@ struct SynthesizeArgs {
 
 #[derive(Debug, Args, Clone)]
 struct ImportBatchArgs {
-    /// Batch IDs to import (e.g., msgbatch_xxx for Anthropic, batch_xxx for OpenAI)
+    /// Batch IDs to import (e.g., batch_xxx for OpenAI)
     #[clap(long, required = true, num_args = 1..)]
     batch_ids: Vec<String>,
-    /// Which provider's batches to import (anthropic or openai)
-    #[clap(long, default_value = "anthropic")]
+    /// Which provider's batches to import (openai)
+    #[clap(long, default_value = "openai")]
     provider: BatchProvider,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 enum BatchProvider {
-    Anthropic,
     Openai,
 }
 
@@ -540,20 +529,20 @@ enum BatchProvider {
 mod tests {
     use super::*;
 
-    #[test]
-    fn prediction_provider_multi_region_non_batched_round_trips_to_primary_spelling() {
-        let provider: PredictionProvider = "teacher-multi-region-non-batching:sonnet46"
-            .parse()
-            .unwrap();
-        assert_eq!(
-            provider,
-            PredictionProvider::TeacherMultiRegionNonBatching(TeacherBackend::Sonnet46)
-        );
-        assert_eq!(
-            provider.to_string(),
-            "teacher-multi-region-non-batching:sonnet46"
-        );
-    }
+    // #[test]
+    // fn prediction_provider_multi_region_non_batched_round_trips_to_primary_spelling() {
+    //     let provider: PredictionProvider = "teacher-multi-region-non-batching:sonnet46"
+    //         .parse()
+    //         .unwrap();
+    //     assert_eq!(
+    //         provider,
+    //         PredictionProvider::TeacherMultiRegionNonBatching(TeacherBackend::Sonnet46)
+    //     );
+    //     assert_eq!(
+    //         provider.to_string(),
+    //         "teacher-multi-region-non-batching:sonnet46"
+    //     );
+    // }
 
     #[test]
     fn prediction_provider_multi_region_non_batched_alias_round_trips_to_primary_spelling() {
@@ -1005,14 +994,6 @@ fn main() {
         Command::ImportBatch(import_args) => {
             gpui::block_on(async {
                 match import_args.provider {
-                    BatchProvider::Anthropic => {
-                        let client = anthropic_client::AnthropicClient::batch(&paths::LLM_CACHE_DB)
-                            .expect("Failed to create Anthropic client");
-                        if let Err(e) = client.import_batches(&import_args.batch_ids).await {
-                            eprintln!("Error importing Anthropic batches: {:?}", e);
-                            std::process::exit(1);
-                        }
-                    }
                     BatchProvider::Openai => {
                         let client = openai_client::OpenAiClient::batch(&paths::LLM_CACHE_DB)
                             .expect("Failed to create OpenAI client");

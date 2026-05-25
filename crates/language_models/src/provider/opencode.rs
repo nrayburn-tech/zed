@@ -24,7 +24,6 @@ use ui::{
 use ui_input::InputField;
 use util::ResultExt;
 
-use crate::provider::anthropic::{AnthropicEventMapper, into_anthropic};
 use crate::provider::google::{GoogleEventMapper, into_google};
 use crate::provider::open_ai::{
     OpenAiEventMapper, OpenAiResponseEventMapper, into_open_ai, into_open_ai_response,
@@ -223,12 +222,10 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
                 OpenCodeSubscription::Go,
             ))
         } else if Self::subscription_enabled(OpenCodeSubscription::Zen, cx) {
-            Some(
-                self.create_language_model(
-                    opencode::Model::default_fast(),
-                    OpenCodeSubscription::Zen,
-                ),
-            )
+            Some(self.create_language_model(
+                opencode::Model::default_free_fast(),
+                OpenCodeSubscription::Zen,
+            ))
         } else if Self::subscription_enabled(OpenCodeSubscription::Free, cx) {
             Some(self.create_language_model(
                 opencode::Model::default_free_fast(),
@@ -258,7 +255,6 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
 
         for model in &settings.available_models {
             let protocol = match model.protocol.as_str() {
-                "anthropic" => ApiProtocol::Anthropic,
                 "openai_responses" => ApiProtocol::OpenAiResponses,
                 "openai_chat" => ApiProtocol::OpenAiChat,
                 "google" => ApiProtocol::Google,
@@ -376,45 +372,6 @@ impl OpenCodeLanguageModel {
             let api_url = OpenCodeLanguageModelProvider::api_url(cx);
             state.api_key_state.key(&api_url)
         })
-    }
-
-    fn stream_anthropic(
-        &self,
-        request: anthropic::Request,
-        http_client: Arc<dyn HttpClient>,
-        cx: &AsyncApp,
-    ) -> BoxFuture<
-        'static,
-        Result<
-            futures::stream::BoxStream<
-                'static,
-                Result<anthropic::Event, anthropic::AnthropicError>,
-            >,
-            LanguageModelCompletionError,
-        >,
-    > {
-        // Anthropic crate appends /v1/messages to api_url
-        let api_url = self.base_api_url(cx);
-        let api_key = self.api_key(cx);
-
-        let future = self.request_limiter.stream(async move {
-            let Some(api_key) = api_key else {
-                return Err(LanguageModelCompletionError::NoApiKey {
-                    provider: PROVIDER_NAME,
-                });
-            };
-            let request = anthropic::stream_completion(
-                http_client.as_ref(),
-                &api_url,
-                &api_key,
-                request,
-                None,
-            );
-            let response = request.await?;
-            Ok(response)
-        });
-
-        async move { Ok(future.await?.boxed()) }.boxed()
     }
 
     fn stream_openai_chat(
@@ -588,7 +545,7 @@ impl LanguageModel for OpenCodeLanguageModel {
             LanguageModelToolChoice::Auto | LanguageModelToolChoice::Any => true,
             LanguageModelToolChoice::None => {
                 // Google models don't support None tool choice
-                self.model.protocol(self.subscription) != ApiProtocol::Google
+                self.model.protocol() != ApiProtocol::Google
             }
         }
     }
@@ -635,30 +592,7 @@ impl LanguageModel for OpenCodeLanguageModel {
             self.http_client.clone()
         };
 
-        match self.model.protocol(self.subscription) {
-            ApiProtocol::Anthropic => {
-                let mode = if self.supports_thinking() && request.thinking_allowed {
-                    anthropic::AnthropicModelMode::AdaptiveThinking
-                } else {
-                    anthropic::AnthropicModelMode::Default
-                };
-                let anthropic_request = into_anthropic(
-                    request,
-                    self.model.id().to_string(),
-                    1.0,
-                    self.model
-                        .max_output_tokens(self.subscription)
-                        .unwrap_or(8192),
-                    mode,
-                    anthropic::completion::AnthropicPromptCacheMode::Automatic,
-                );
-                let stream = self.stream_anthropic(anthropic_request, http_client, cx);
-                async move {
-                    let mapper = AnthropicEventMapper::new();
-                    Ok(mapper.map_stream(stream.await?).boxed())
-                }
-                .boxed()
-            }
+        match self.model.protocol() {
             ApiProtocol::OpenAiChat => {
                 let reasoning_effort = if request.thinking_allowed {
                     request

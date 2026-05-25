@@ -1,10 +1,5 @@
 use crate::{LanguageModelProviderId, LanguageModelProviderName};
 
-pub const ANTHROPIC_PROVIDER_ID: LanguageModelProviderId =
-    LanguageModelProviderId::new("anthropic");
-pub const ANTHROPIC_PROVIDER_NAME: LanguageModelProviderName =
-    LanguageModelProviderName::new("Anthropic");
-
 pub const OPEN_AI_PROVIDER_ID: LanguageModelProviderId = LanguageModelProviderId::new("openai");
 pub const OPEN_AI_PROVIDER_NAME: LanguageModelProviderName =
     LanguageModelProviderName::new("OpenAI");

@@ -314,9 +314,6 @@ impl AgentServer for CustomAgentServer {
         }
         if is_registry_agent {
             match agent_id.as_ref() {
-                CLAUDE_AGENT_ID => {
-                    extra_env.insert("ANTHROPIC_API_KEY".into(), "".into());
-                }
                 CODEX_ID => {
                     if let Ok(api_key) = std::env::var("CODEX_API_KEY") {
                         extra_env.insert("CODEX_API_KEY".into(), api_key);

@@ -1,6 +1,5 @@
 use crate::{
     FormatPromptArgs, PredictArgs, PredictionProvider, TeacherBackend,
-    anthropic_client::AnthropicClient,
     example::{Example, ExamplePrediction, ExamplePrompt},
     format_prompt::{TeacherMultiRegionPrompt, TeacherPrompt, run_format_prompt},
     headless::EpAppState,
@@ -27,7 +26,6 @@ use std::{
 };
 use zeta_prompt::ZetaFormat;
 
-static ANTHROPIC_CLIENT: OnceLock<AnthropicClient> = OnceLock::new();
 static OPENAI_CLIENT: OnceLock<OpenAiClient> = OnceLock::new();
 
 pub async fn run_prediction(
@@ -333,17 +331,6 @@ async fn predict_teacher(
     step_progress: &crate::progress::StepProgress,
 ) -> anyhow::Result<()> {
     match backend {
-        TeacherBackend::Sonnet45 | TeacherBackend::Sonnet46 => {
-            predict_anthropic(
-                example,
-                backend,
-                batched,
-                repetition_count,
-                cache_only,
-                step_progress,
-            )
-            .await
-        }
         TeacherBackend::Gpt52 => {
             predict_openai(
                 example,
@@ -356,119 +343,6 @@ async fn predict_teacher(
             .await
         }
     }
-}
-
-async fn predict_anthropic(
-    example: &mut Example,
-    backend: TeacherBackend,
-    batched: bool,
-    repetition_count: usize,
-    cache_only: bool,
-    step_progress: &crate::progress::StepProgress,
-) -> anyhow::Result<()> {
-    let llm_model_name = backend.model_name();
-    let max_tokens = 16384;
-    let llm_client = ANTHROPIC_CLIENT.get_or_init(|| {
-        let client = if batched {
-            AnthropicClient::batch(&crate::paths::LLM_CACHE_DB)
-        } else {
-            AnthropicClient::plain()
-        };
-        client.expect("Failed to create Anthropic client")
-    });
-
-    let prompt = example.prompt.as_ref().context("Prompt is required")?;
-
-    for ix in 0..repetition_count {
-        if repetition_count > 1 {
-            step_progress.set_substatus(format!(
-                "running prediction {}/{}",
-                ix + 1,
-                repetition_count
-            ));
-        } else {
-            step_progress.set_substatus("running prediction");
-        }
-
-        let messages = vec![anthropic::Message {
-            role: anthropic::Role::User,
-            content: vec![anthropic::RequestContent::Text {
-                text: prompt.input.clone(),
-                cache_control: None,
-            }],
-        }];
-
-        let seed = if repetition_count > 1 { Some(ix) } else { None };
-        let Some(response) = llm_client
-            .generate(llm_model_name, max_tokens, messages, seed, cache_only)
-            .await?
-        else {
-            // Request stashed for batched processing
-            continue;
-        };
-
-        let actual_output = response
-            .content
-            .into_iter()
-            .filter_map(|content| match content {
-                anthropic::ResponseContent::Text { text } => Some(text),
-                _ => None,
-            })
-            .collect::<Vec<String>>()
-            .join("\n");
-
-        let parser_provider = if batched {
-            example
-                .prompt
-                .as_ref()
-                .map(|prompt| prompt.provider)
-                .unwrap_or(PredictionProvider::Teacher(backend, ZetaFormat::default()))
-        } else {
-            match example.prompt.as_ref().map(|prompt| prompt.provider) {
-                Some(PredictionProvider::TeacherMultiRegion(_))
-                | Some(PredictionProvider::TeacherMultiRegionNonBatching(_)) => {
-                    PredictionProvider::TeacherMultiRegionNonBatching(backend)
-                }
-                _ => PredictionProvider::TeacherNonBatching(backend, ZetaFormat::default()),
-            }
-        };
-
-        let (actual_patch, actual_cursor) = match parser_provider {
-            PredictionProvider::TeacherMultiRegion(_)
-            | PredictionProvider::TeacherMultiRegionNonBatching(_) => {
-                TeacherMultiRegionPrompt::parse(example, &actual_output)?
-            }
-            _ => TeacherPrompt::parse(example, &actual_output)?,
-        };
-
-        let prediction = ExamplePrediction {
-            actual_patch: Some(actual_patch),
-            actual_output,
-            actual_cursor,
-            error: None,
-            provider: if batched {
-                match example.prompt.as_ref().map(|prompt| prompt.provider) {
-                    Some(PredictionProvider::TeacherMultiRegion(_)) => {
-                        PredictionProvider::TeacherMultiRegion(backend)
-                    }
-                    _ => PredictionProvider::Teacher(backend, ZetaFormat::default()),
-                }
-            } else {
-                match example.prompt.as_ref().map(|prompt| prompt.provider) {
-                    Some(PredictionProvider::TeacherMultiRegion(_))
-                    | Some(PredictionProvider::TeacherMultiRegionNonBatching(_)) => {
-                        PredictionProvider::TeacherMultiRegionNonBatching(backend)
-                    }
-                    _ => PredictionProvider::TeacherNonBatching(backend, ZetaFormat::default()),
-                }
-            },
-            cumulative_logprob: None,
-            avg_logprob: None,
-        };
-
-        example.predictions.push(prediction);
-    }
-    Ok(())
 }
 
 async fn predict_openai(
@@ -679,16 +553,6 @@ pub async fn sync_batches(provider: Option<&PredictionProvider>) -> anyhow::Resu
     match provider {
         Some(PredictionProvider::Teacher(backend, _))
         | Some(PredictionProvider::TeacherMultiRegion(backend)) => match backend {
-            TeacherBackend::Sonnet45 | TeacherBackend::Sonnet46 => {
-                let llm_client = ANTHROPIC_CLIENT.get_or_init(|| {
-                    AnthropicClient::batch(&crate::paths::LLM_CACHE_DB)
-                        .expect("Failed to create Anthropic client")
-                });
-                llm_client
-                    .sync_batches()
-                    .await
-                    .context("Failed to sync Anthropic batches")?;
-            }
             TeacherBackend::Gpt52 => {
                 let llm_client = OPENAI_CLIENT.get_or_init(|| {
                     OpenAiClient::batch(&crate::paths::LLM_CACHE_DB)
@@ -769,13 +633,6 @@ pub async fn wait_for_batches(provider: Option<&PredictionProvider>) -> anyhow::
 fn pending_batch_count(provider: Option<&PredictionProvider>) -> anyhow::Result<usize> {
     match provider {
         Some(PredictionProvider::Teacher(backend, _)) => match backend {
-            TeacherBackend::Sonnet45 | TeacherBackend::Sonnet46 => {
-                let llm_client = ANTHROPIC_CLIENT.get_or_init(|| {
-                    AnthropicClient::batch(&crate::paths::LLM_CACHE_DB)
-                        .expect("Failed to create Anthropic client")
-                });
-                llm_client.pending_batch_count()
-            }
             TeacherBackend::Gpt52 => {
                 let llm_client = OPENAI_CLIENT.get_or_init(|| {
                     OpenAiClient::batch(&crate::paths::LLM_CACHE_DB)

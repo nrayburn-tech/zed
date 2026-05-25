@@ -4013,7 +4013,7 @@ async fn test_send_retry_on_error(cx: &mut TestAppContext) {
 
     fake_model.send_last_completion_stream_text_chunk("Hey,");
     fake_model.send_last_completion_stream_error(LanguageModelCompletionError::ServerOverloaded {
-        provider: LanguageModelProviderName::new("Anthropic"),
+        provider: LanguageModelProviderName::new("Zed"),
         retry_after: Some(Duration::from_secs(3)),
     });
     fake_model.end_last_completion_stream();
@@ -4088,7 +4088,7 @@ async fn test_send_retry_finishes_tool_calls_on_error(cx: &mut TestAppContext) {
         tool_use_1.clone(),
     ));
     fake_model.send_last_completion_stream_error(LanguageModelCompletionError::ServerOverloaded {
-        provider: LanguageModelProviderName::new("Anthropic"),
+        provider: LanguageModelProviderName::new("Zed"),
         retry_after: Some(Duration::from_secs(3)),
     });
     fake_model.end_last_completion_stream();
@@ -4158,7 +4158,7 @@ async fn test_send_max_retries_exceeded(cx: &mut TestAppContext) {
     for _ in 0..crate::thread::MAX_RETRY_ATTEMPTS + 1 {
         fake_model.send_last_completion_stream_error(
             LanguageModelCompletionError::ServerOverloaded {
-                provider: LanguageModelProviderName::new("Anthropic"),
+                provider: LanguageModelProviderName::new("Zed"),
                 retry_after: Some(Duration::from_secs(3)),
             },
         );

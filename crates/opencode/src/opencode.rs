@@ -12,7 +12,6 @@ pub const OPENCODE_API_URL: &str = "https://opencode.ai/zen";
 #[serde(rename_all = "snake_case")]
 pub enum ApiProtocol {
     #[default]
-    Anthropic,
     OpenAiResponses,
     OpenAiChat,
     Google,
@@ -55,26 +54,8 @@ impl OpenCodeSubscription {
 #[cfg_attr(feature = "schemars", derive(schemars::JsonSchema))]
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, EnumIter)]
 pub enum Model {
-    // -- Anthropic protocol models --
-    #[serde(rename = "claude-opus-4-7")]
-    ClaudeOpus4_7,
-    #[serde(rename = "claude-opus-4-6")]
-    ClaudeOpus4_6,
-    #[serde(rename = "claude-opus-4-5")]
-    ClaudeOpus4_5,
-    #[serde(rename = "claude-opus-4-1")]
-    ClaudeOpus4_1,
-    #[default]
-    #[serde(rename = "claude-sonnet-4-6")]
-    ClaudeSonnet4_6,
-    #[serde(rename = "claude-sonnet-4-5")]
-    ClaudeSonnet4_5,
-    #[serde(rename = "claude-sonnet-4")]
-    ClaudeSonnet4,
-    #[serde(rename = "claude-haiku-4-5")]
-    ClaudeHaiku4_5,
-
     // -- OpenAI Responses API models --
+    #[default]
     #[serde(rename = "gpt-5.5")]
     Gpt5_5,
     #[serde(rename = "gpt-5.5-pro")]
@@ -161,10 +142,6 @@ pub enum Model {
 }
 
 impl Model {
-    pub fn default_fast() -> Self {
-        Self::ClaudeHaiku4_5
-    }
-
     pub fn default_go() -> Self {
         Self::KimiK2_5
     }
@@ -208,15 +185,6 @@ impl Model {
 
     pub fn id(&self) -> &str {
         match self {
-            Self::ClaudeOpus4_7 => "claude-opus-4-7",
-            Self::ClaudeOpus4_6 => "claude-opus-4-6",
-            Self::ClaudeOpus4_5 => "claude-opus-4-5",
-            Self::ClaudeOpus4_1 => "claude-opus-4-1",
-            Self::ClaudeSonnet4_6 => "claude-sonnet-4-6",
-            Self::ClaudeSonnet4_5 => "claude-sonnet-4-5",
-            Self::ClaudeSonnet4 => "claude-sonnet-4",
-            Self::ClaudeHaiku4_5 => "claude-haiku-4-5",
-
             Self::Gpt5_5 => "gpt-5.5",
             Self::Gpt5_5Pro => "gpt-5.5-pro",
             Self::Gpt5_4 => "gpt-5.4",
@@ -259,15 +227,6 @@ impl Model {
 
     pub fn display_name(&self) -> &str {
         match self {
-            Self::ClaudeOpus4_7 => "Claude Opus 4.7",
-            Self::ClaudeOpus4_6 => "Claude Opus 4.6",
-            Self::ClaudeOpus4_5 => "Claude Opus 4.5",
-            Self::ClaudeOpus4_1 => "Claude Opus 4.1",
-            Self::ClaudeSonnet4_6 => "Claude Sonnet 4.6",
-            Self::ClaudeSonnet4_5 => "Claude Sonnet 4.5",
-            Self::ClaudeSonnet4 => "Claude Sonnet 4",
-            Self::ClaudeHaiku4_5 => "Claude Haiku 4.5",
-
             Self::Gpt5_5 => "GPT 5.5",
             Self::Gpt5_5Pro => "GPT 5.5 Pro",
             Self::Gpt5_4 => "GPT 5.4",
@@ -310,26 +269,11 @@ impl Model {
         }
     }
 
-    pub fn protocol(&self, subscription: OpenCodeSubscription) -> ApiProtocol {
+    pub fn protocol(&self) -> ApiProtocol {
         match self {
             // Models offered by OpenCode have the same configuration across subscriptions
             //  with one outlier: non-free MiniMax models
-            Self::MiniMaxM2_7 | Self::MiniMaxM2_5 => {
-                if subscription == OpenCodeSubscription::Zen {
-                    ApiProtocol::OpenAiChat
-                } else {
-                    ApiProtocol::Anthropic
-                }
-            }
-
-            Self::ClaudeOpus4_7
-            | Self::ClaudeOpus4_6
-            | Self::ClaudeOpus4_5
-            | Self::ClaudeOpus4_1
-            | Self::ClaudeSonnet4_6
-            | Self::ClaudeSonnet4_5
-            | Self::ClaudeSonnet4
-            | Self::ClaudeHaiku4_5 => ApiProtocol::Anthropic,
+            Self::MiniMaxM2_7 | Self::MiniMaxM2_5 => ApiProtocol::OpenAiChat,
 
             Self::Gpt5_5
             | Self::Gpt5_5Pro
@@ -389,14 +333,6 @@ impl Model {
 
     pub fn max_token_count(&self, subscription: OpenCodeSubscription) -> u64 {
         match self {
-            // Anthropic models
-            Self::ClaudeOpus4_7 => 1_000_000,
-            Self::ClaudeOpus4_6 | Self::ClaudeSonnet4_6 => 1_000_000,
-            Self::ClaudeSonnet4_5 => 1_000_000,
-            Self::ClaudeOpus4_5 | Self::ClaudeHaiku4_5 => 200_000,
-            Self::ClaudeOpus4_1 => 200_000,
-            Self::ClaudeSonnet4 => 1_000_000,
-
             // OpenAI models
             Self::Gpt5_5 | Self::Gpt5_5Pro => 1_050_000,
             Self::Gpt5_4 | Self::Gpt5_4Pro => 1_050_000,
@@ -438,15 +374,6 @@ impl Model {
 
     pub fn max_output_tokens(&self, subscription: OpenCodeSubscription) -> Option<u64> {
         match self {
-            // Anthropic models
-            Self::ClaudeOpus4_7 | Self::ClaudeOpus4_6 => Some(128_000),
-            Self::ClaudeOpus4_5
-            | Self::ClaudeSonnet4_6
-            | Self::ClaudeSonnet4_5
-            | Self::ClaudeHaiku4_5
-            | Self::ClaudeSonnet4 => Some(64_000),
-            Self::ClaudeOpus4_1 => Some(32_000),
-
             // OpenAI models
             Self::Gpt5_5
             | Self::Gpt5_5Pro
@@ -504,16 +431,6 @@ impl Model {
 
     pub fn supports_images(&self) -> bool {
         match self {
-            // Anthropic models support images
-            Self::ClaudeOpus4_7
-            | Self::ClaudeOpus4_6
-            | Self::ClaudeOpus4_5
-            | Self::ClaudeOpus4_1
-            | Self::ClaudeSonnet4_6
-            | Self::ClaudeSonnet4_5
-            | Self::ClaudeSonnet4
-            | Self::ClaudeHaiku4_5 => true,
-
             // OpenAI models support images
             Self::Gpt5_5
             | Self::Gpt5_5Pro
@@ -557,10 +474,7 @@ impl Model {
 
             Self::Custom { protocol, .. } => matches!(
                 protocol,
-                ApiProtocol::Anthropic
-                    | ApiProtocol::OpenAiResponses
-                    | ApiProtocol::OpenAiChat
-                    | ApiProtocol::Google
+                ApiProtocol::OpenAiResponses | ApiProtocol::OpenAiChat | ApiProtocol::Google
             ),
         }
     }

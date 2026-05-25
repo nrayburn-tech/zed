@@ -687,24 +687,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anthropic"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "collections",
- "futures 0.3.32",
- "http_client",
- "language_model_core",
- "log",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "strum 0.27.2",
- "thiserror 2.0.17",
-]
-
-[[package]]
 name = "any_vec"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3649,7 +3631,6 @@ dependencies = [
 name = "copilot_chat"
 version = "0.1.0"
 dependencies = [
- "anthropic",
  "anyhow",
  "collections",
  "dirs",
@@ -5280,7 +5261,6 @@ dependencies = [
 name = "edit_prediction_cli"
 version = "0.1.0"
 dependencies = [
- "anthropic",
  "anyhow",
  "chrono",
  "clap",
@@ -9610,7 +9590,6 @@ name = "language_models"
 version = "0.1.0"
 dependencies = [
  "ai_onboarding",
- "anthropic",
  "anyhow",
  "async-lock",
  "aws-config",
@@ -9672,7 +9651,6 @@ dependencies = [
 name = "language_models_cloud"
 version = "0.1.0"
 dependencies = [
- "anthropic",
  "anyhow",
  "cloud_llm_client",
  "futures 0.3.32",
