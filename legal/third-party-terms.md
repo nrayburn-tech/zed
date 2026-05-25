@@ -5,7 +5,9 @@ slug: acceptable-use-policies
 
 **Last Updated:** March 2, 2026
 
-Some third-party services accessible through Zed have their own acceptable use policies. These apply whether Zed hosts the service on your behalf or you connect your own account. The applicable policies are listed below and apply alongside the [Zed End User Terms](/terms) and [Zed Privacy Policy](/privacy-policy).
+Some third-party services accessible through Zed have their own acceptable use policies. These apply whether Zed hosts
+the service on your behalf or you connect your own account. The applicable policies are listed below and apply alongside
+the [Zed End User Terms](/terms) and [Zed Privacy Policy](/privacy-policy).
 
 These policies may be updated from time to time by the applicable provider.
 
@@ -33,7 +35,3 @@ These policies may be updated from time to time by the applicable provider.
 ## Vercel
 
 - [Vercel Acceptable Use Policy](https://vercel.com/legal/acceptable-use-policy)
-
-## xAI
-
-- [xAI Acceptable Use Policy](https://x.ai/legal/acceptable-use-policy)

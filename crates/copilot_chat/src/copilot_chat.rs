@@ -227,8 +227,6 @@ pub enum ModelVendor {
     OpenAI,
     Google,
     Anthropic,
-    #[serde(rename = "xAI")]
-    XAI,
     /// Unknown vendor that we don't explicitly support yet
     #[serde(other)]
     Unknown,

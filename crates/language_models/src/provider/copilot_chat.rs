@@ -270,7 +270,7 @@ impl LanguageModel for CopilotChatLanguageModel {
             ModelVendor::OpenAI | ModelVendor::Anthropic => {
                 LanguageModelToolSchemaFormat::JsonSchema
             }
-            ModelVendor::Google | ModelVendor::XAI | ModelVendor::Unknown => {
+            ModelVendor::Google | ModelVendor::Unknown => {
                 LanguageModelToolSchemaFormat::JsonSchemaSubset
             }
         }

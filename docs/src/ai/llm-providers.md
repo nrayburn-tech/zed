@@ -38,7 +38,6 @@ Zed supports these providers with your own API keys:
 - [OpenCode](#opencode)
 - [OpenRouter](#openrouter)
 - [Vercel AI Gateway](#vercel-ai-gateway)
-- [xAI](#xai)
 
 ### Anthropic {#anthropic}
 
@@ -726,51 +725,6 @@ You can also set a custom endpoint for Vercel AI Gateway in your settings file:
   "language_models": {
     "vercel_ai_gateway": {
       "api_url": "https://ai-gateway.vercel.sh/v1"
-    }
-  }
-}
-```
-
-### xAI {#xai}
-
-Zed includes a dedicated [xAI](https://x.ai/) provider. You can use your own API key to access Grok models.
-
-1. [Create an API key in the xAI Console](https://console.x.ai/team/default/api-keys)
-2. Open the settings view ({#action agent::OpenSettings}) and go to the **xAI** section
-3. Enter your xAI API key
-
-The xAI API key will be saved in your keychain. Zed will also use the `XAI_API_KEY` environment variable if it's
-defined.
-
-> **Note:** The xAI API is OpenAI-compatible, and Zed also includes a dedicated xAI provider. We recommend using the
-> dedicated `x_ai` provider configuration instead of the [OpenAI API Compatible](#openai-api-compatible) method.
-
-#### Custom Models {#xai-custom-models}
-
-The Zed agent comes pre-configured with common Grok models. If you wish to use alternate models or customize their
-parameters, you can do so by adding the following to your Zed settings file
-([how to edit](../configuring-zed.md#settings-files)):
-
-```json [settings]
-{
-  "language_models": {
-    "x_ai": {
-      "api_url": "https://api.x.ai/v1",
-      "available_models": [
-        {
-          "name": "grok-1.5",
-          "display_name": "Grok 1.5",
-          "max_tokens": 131072,
-          "max_output_tokens": 8192
-        },
-        {
-          "name": "grok-1.5v",
-          "display_name": "Grok 1.5V (Vision)",
-          "max_tokens": 131072,
-          "max_output_tokens": 8192,
-          "supports_images": true
-        }
-      ]
     }
   }
 }

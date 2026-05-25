@@ -57,7 +57,6 @@
 # SUGGESTED: Review needed - based on Richard Feldman (2 commits)
 /crates/shell_command_parser/ @zed-industries/ai-team
 /crates/vercel/ @zed-industries/ai-team
-/crates/x_ai/ @zed-industries/ai-team
 /crates/zeta_prompt/ @zed-industries/ai-team
 
 # ═══════════════════════════════════════════════════════════════════════════════

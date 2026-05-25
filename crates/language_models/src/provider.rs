@@ -12,4 +12,3 @@ pub mod openai_subscribed;
 pub mod opencode;
 
 pub mod vercel_ai_gateway;
-pub mod x_ai;

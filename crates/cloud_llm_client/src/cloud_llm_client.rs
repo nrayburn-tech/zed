@@ -55,9 +55,6 @@ pub const CLIENT_SUPPORTS_STATUS_STREAM_ENDED_HEADER_NAME: &str =
 pub const SERVER_SUPPORTS_STATUS_MESSAGES_HEADER_NAME: &str =
     "x-zed-server-supports-status-messages";
 
-/// The name of the header used by the client to indicate that it supports receiving xAI models.
-pub const CLIENT_SUPPORTS_X_AI_HEADER_NAME: &str = "x-zed-client-supports-x-ai";
-
 /// The maximum number of edit predictions that can be rejected per request.
 pub const MAX_EDIT_PREDICTION_REJECTIONS_PER_REQUEST: usize = 100;
 
@@ -91,7 +88,6 @@ pub enum LanguageModelProvider {
     Anthropic,
     OpenAi,
     Google,
-    XAi,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -297,7 +293,7 @@ pub struct LanguageModel {
     pub supported_effort_levels: Vec<SupportedEffortLevel>,
     #[serde(default)]
     pub supports_streaming_tools: bool,
-    /// Only used by OpenAI and xAI.
+    /// Only used by OpenAI.
     #[serde(default)]
     pub supports_parallel_tool_calls: bool,
 }

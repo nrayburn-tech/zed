@@ -2,8 +2,8 @@ use anthropic::AnthropicModelMode;
 use anyhow::{Context as _, Result, anyhow};
 use cloud_llm_client::{
     CLIENT_SUPPORTS_STATUS_MESSAGES_HEADER_NAME, CLIENT_SUPPORTS_STATUS_STREAM_ENDED_HEADER_NAME,
-    CLIENT_SUPPORTS_X_AI_HEADER_NAME, CompletionBody, CompletionEvent, CompletionRequestStatus,
-    EXPIRED_LLM_TOKEN_HEADER_NAME, ListModelsResponse, OUTDATED_LLM_TOKEN_HEADER_NAME,
+    CompletionBody, CompletionEvent, CompletionRequestStatus, EXPIRED_LLM_TOKEN_HEADER_NAME,
+    ListModelsResponse, OUTDATED_LLM_TOKEN_HEADER_NAME,
     SERVER_SUPPORTS_STATUS_MESSAGES_HEADER_NAME, ZED_VERSION_HEADER_NAME,
 };
 use futures::{
@@ -24,8 +24,7 @@ use language_model::{
     LanguageModelEffortLevel, LanguageModelId, LanguageModelName, LanguageModelProviderId,
     LanguageModelProviderName, LanguageModelRequest, LanguageModelToolChoice,
     LanguageModelToolSchemaFormat, OPEN_AI_PROVIDER_ID, OPEN_AI_PROVIDER_NAME,
-    PaymentRequiredError, RateLimiter, X_AI_PROVIDER_ID, X_AI_PROVIDER_NAME, ZED_CLOUD_PROVIDER_ID,
-    ZED_CLOUD_PROVIDER_NAME,
+    PaymentRequiredError, RateLimiter, ZED_CLOUD_PROVIDER_ID, ZED_CLOUD_PROVIDER_NAME,
 };
 
 use schemars::JsonSchema;
@@ -41,9 +40,7 @@ use thiserror::Error;
 
 use anthropic::completion::{AnthropicEventMapper, AnthropicPromptCacheMode, into_anthropic};
 use google_ai::completion::{GoogleEventMapper, into_google};
-use open_ai::completion::{
-    OpenAiEventMapper, OpenAiResponseEventMapper, into_open_ai, into_open_ai_response,
-};
+use open_ai::completion::{OpenAiResponseEventMapper, into_open_ai_response};
 
 const PROVIDER_ID: LanguageModelProviderId = ZED_CLOUD_PROVIDER_ID;
 const PROVIDER_NAME: LanguageModelProviderName = ZED_CLOUD_PROVIDER_NAME;
@@ -280,7 +277,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
             Anthropic => ANTHROPIC_PROVIDER_ID,
             OpenAi => OPEN_AI_PROVIDER_ID,
             Google => GOOGLE_PROVIDER_ID,
-            XAi => X_AI_PROVIDER_ID,
         }
     }
 
@@ -290,7 +286,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
             Anthropic => ANTHROPIC_PROVIDER_NAME,
             OpenAi => OPEN_AI_PROVIDER_NAME,
             Google => GOOGLE_PROVIDER_NAME,
-            XAi => X_AI_PROVIDER_NAME,
         }
     }
 
@@ -340,7 +335,7 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
 
     fn supports_split_token_display(&self) -> bool {
         use cloud_llm_client::LanguageModelProvider::*;
-        matches!(self.model.provider, OpenAi | XAi)
+        matches!(self.model.provider, OpenAi)
     }
 
     fn telemetry_id(&self) -> String {
@@ -353,8 +348,7 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
             | cloud_llm_client::LanguageModelProvider::OpenAi => {
                 LanguageModelToolSchemaFormat::JsonSchema
             }
-            cloud_llm_client::LanguageModelProvider::Google
-            | cloud_llm_client::LanguageModelProvider::XAi => {
+            cloud_llm_client::LanguageModelProvider::Google => {
                 LanguageModelToolSchemaFormat::JsonSchemaSubset
             }
         }
@@ -515,48 +509,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
                 });
                 async move { Ok(future.await?.boxed()) }.boxed()
             }
-            cloud_llm_client::LanguageModelProvider::XAi => {
-                let http_client = self.http_client.clone();
-                let token_provider = self.token_provider.clone();
-                let request = into_open_ai(
-                    request,
-                    &self.model.id.0,
-                    self.model.supports_parallel_tool_calls,
-                    false,
-                    None,
-                    None,
-                    false,
-                );
-                let auth_context = token_provider.auth_context(cx);
-                let future = self.request_limiter.stream(async move {
-                    let PerformLlmCompletionResponse {
-                        response,
-                        includes_status_messages,
-                    } = Self::perform_llm_completion(
-                        &http_client,
-                        &*token_provider,
-                        auth_context,
-                        app_version,
-                        CompletionBody {
-                            thread_id,
-                            prompt_id,
-                            provider: cloud_llm_client::LanguageModelProvider::XAi,
-                            model: request.model.clone(),
-                            provider_request: serde_json::to_value(&request)
-                                .map_err(|e| anyhow!(e))?,
-                        },
-                    )
-                    .await?;
-
-                    let mut mapper = OpenAiEventMapper::new();
-                    Ok(map_cloud_completion_events(
-                        Box::pin(response_lines(response, includes_status_messages)),
-                        &provider_name,
-                        move |event| mapper.map_event(event),
-                    ))
-                });
-                async move { Ok(future.await?.boxed()) }.boxed()
-            }
             cloud_llm_client::LanguageModelProvider::Google => {
                 let http_client = self.http_client.clone();
                 let token_provider = self.token_provider.clone();
@@ -647,7 +599,6 @@ impl<TP: CloudLlmTokenProvider + 'static> CloudModelProvider<TP> {
             authenticated_llm_request(http_client, token_provider, auth_context, |token| {
                 Ok(http_client::Request::builder()
                     .method(Method::GET)
-                    .header(CLIENT_SUPPORTS_X_AI_HEADER_NAME, "true")
                     .uri(url.as_ref())
                     .header("Authorization", format!("Bearer {token}"))
                     .body(AsyncBody::empty())?)
@@ -807,7 +758,6 @@ pub fn provider_name(
         cloud_llm_client::LanguageModelProvider::Anthropic => ANTHROPIC_PROVIDER_NAME,
         cloud_llm_client::LanguageModelProvider::OpenAi => OPEN_AI_PROVIDER_NAME,
         cloud_llm_client::LanguageModelProvider::Google => GOOGLE_PROVIDER_NAME,
-        cloud_llm_client::LanguageModelProvider::XAi => X_AI_PROVIDER_NAME,
     }
 }
 
