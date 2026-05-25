@@ -29,7 +29,6 @@
 /crates/agent_servers/ @zed-industries/ai-team
 /crates/agent_settings/ @zed-industries/ai-team
 /crates/agent_ui/ @zed-industries/ai-team
-/crates/ai_onboarding/ @zed-industries/ai-team
 /crates/anthropic/ @zed-industries/ai-team
 /crates/cloud_llm_client/ @zed-industries/ai-team
 /crates/context_server/ @zed-industries/ai-team
