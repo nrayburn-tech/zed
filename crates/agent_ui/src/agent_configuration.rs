@@ -1,4 +1,3 @@
-mod add_llm_provider_modal;
 pub mod configure_context_server_modal;
 mod configure_context_server_tools_modal;
 mod manage_profiles_modal;
@@ -8,7 +7,6 @@ use std::{ops::Range, rc::Rc, sync::Arc};
 
 use agent::ContextServerRegistry;
 use anyhow::Result;
-use cloud_api_types::Plan;
 use collections::HashMap;
 use context_server::ContextServerId;
 use editor::{Editor, MultiBufferOffset, SelectionEffects, scroll::Autoscroll};
@@ -16,26 +14,22 @@ use extension::ExtensionManifest;
 use extension_host::ExtensionStore;
 use fs::Fs;
 use gpui::{
-    Action, Anchor, AnyView, App, AsyncWindowContext, Entity, EventEmitter, FocusHandle, Focusable,
-    ScrollHandle, Subscription, Task, TaskExt, WeakEntity,
+    Action, Anchor, AnyView, App, AsyncWindowContext, Entity, FocusHandle, Focusable, ScrollHandle,
+    Subscription, Task, TaskExt, WeakEntity,
 };
 use itertools::Itertools;
 use language::LanguageRegistry;
-use language_model::{
-    IconOrSvg, LanguageModelProvider, LanguageModelProviderId, LanguageModelRegistry,
-    ZED_CLOUD_PROVIDER_ID,
-};
-use language_models::AllLanguageModelSettings;
+use language_model::{LanguageModelProvider, LanguageModelProviderId, LanguageModelRegistry};
 use notifications::status_toast::StatusToast;
 use project::{
     agent_server_store::{AgentId, AgentServerStore, ExternalAgentSource},
     context_server_store::{ContextServerConfiguration, ContextServerStatus, ContextServerStore},
 };
-use settings::{Settings, SettingsStore, update_settings_file};
+use settings::{SettingsStore, update_settings_file};
 use ui::{
-    AiSettingItem, AiSettingItemSource, AiSettingItemStatus, ButtonStyle, Chip, ContextMenu,
-    ContextMenuEntry, Disclosure, Divider, DividerColor, ElevationIndex, LabelSize, PopoverMenu,
-    Switch, Tooltip, WithScrollbar, prelude::*,
+    AiSettingItem, AiSettingItemSource, AiSettingItemStatus, ButtonStyle, ContextMenu,
+    ContextMenuEntry, Divider, DividerColor, LabelSize, PopoverMenu, Switch, Tooltip,
+    WithScrollbar, prelude::*,
 };
 use util::ResultExt as _;
 use workspace::{Workspace, create_and_open_local_file};
@@ -47,7 +41,6 @@ pub(crate) use manage_profiles_modal::ManageProfilesModal;
 
 use crate::{
     Agent,
-    agent_configuration::add_llm_provider_modal::{AddLlmProviderModal, LlmCompatibleProvider},
     agent_connection_store::{AgentConnectionStatus, AgentConnectionStore},
 };
 
@@ -155,12 +148,6 @@ impl Focusable for AgentConfiguration {
     }
 }
 
-pub enum AssistantConfigurationEvent {
-    NewThread(Arc<dyn LanguageModelProvider>),
-}
-
-impl EventEmitter<AssistantConfigurationEvent> for AgentConfiguration {}
-
 enum AgentIcon {
     Name(IconName),
     Path(SharedString),
@@ -195,332 +182,6 @@ impl AgentConfiguration {
                     )
                     .child(Label::new(description.into()).color(Color::Muted)),
             )
-    }
-
-    fn render_provider_configuration_block(
-        &mut self,
-        provider: &Arc<dyn LanguageModelProvider>,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement + use<> {
-        let provider_id = provider.id().0;
-        let provider_name = provider.name().0;
-        let provider_id_string = SharedString::from(format!("provider-disclosure-{provider_id}"));
-
-        let configuration_view = self
-            .configuration_views_by_provider
-            .get(&provider.id())
-            .cloned();
-
-        let is_expanded = self
-            .expanded_provider_configurations
-            .get(&provider.id())
-            .copied()
-            .unwrap_or(false);
-
-        let is_zed_provider = provider.id() == ZED_CLOUD_PROVIDER_ID;
-        let current_plan = if is_zed_provider {
-            self.workspace
-                .upgrade()
-                .and_then(|workspace| workspace.read(cx).user_store().read(cx).plan())
-        } else {
-            None
-        };
-
-        let is_signed_in = self
-            .workspace
-            .read_with(cx, |workspace, _| {
-                !workspace.client().status().borrow().is_signed_out()
-            })
-            .unwrap_or(false);
-
-        v_flex()
-            .min_w_0()
-            .w_full()
-            .when(is_expanded, |this| this.mb_2())
-            .child(
-                div()
-                    .px_2()
-                    .child(Divider::horizontal().color(DividerColor::BorderFaded)),
-            )
-            .child(
-                h_flex()
-                    .map(|this| {
-                        if is_expanded {
-                            this.mt_2().mb_1()
-                        } else {
-                            this.my_2()
-                        }
-                    })
-                    .w_full()
-                    .justify_between()
-                    .child(
-                        h_flex()
-                            .id(provider_id_string.clone())
-                            .px_2()
-                            .py_0p5()
-                            .w_full()
-                            .justify_between()
-                            .rounded_sm()
-                            .hover(|hover| hover.bg(cx.theme().colors().element_hover))
-                            .child(
-                                h_flex()
-                                    .w_full()
-                                    .gap_1p5()
-                                    .child(
-                                        match provider.icon() {
-                                            IconOrSvg::Svg(path) => Icon::from_external_svg(path),
-                                            IconOrSvg::Icon(name) => Icon::new(name),
-                                        }
-                                        .size(IconSize::Small)
-                                        .color(Color::Muted),
-                                    )
-                                    .child(
-                                        h_flex()
-                                            .w_full()
-                                            .gap_1()
-                                            .child(Label::new(provider_name.clone()))
-                                            .map(|this| {
-                                                if is_zed_provider && is_signed_in {
-                                                    this.child(
-                                                        self.render_zed_plan_info(current_plan, cx),
-                                                    )
-                                                } else {
-                                                    this.when(
-                                                        provider.is_authenticated(cx)
-                                                            && !is_expanded,
-                                                        |parent| {
-                                                            parent.child(
-                                                                Icon::new(IconName::Check)
-                                                                    .color(Color::Success),
-                                                            )
-                                                        },
-                                                    )
-                                                }
-                                            }),
-                                    ),
-                            )
-                            .child(
-                                Disclosure::new(provider_id_string, is_expanded)
-                                    .opened_icon(IconName::ChevronUp)
-                                    .closed_icon(IconName::ChevronDown),
-                            )
-                            .on_click(cx.listener({
-                                let provider_id = provider.id();
-                                move |this, _event, _window, _cx| {
-                                    let is_expanded = this
-                                        .expanded_provider_configurations
-                                        .entry(provider_id.clone())
-                                        .or_insert(false);
-
-                                    *is_expanded = !*is_expanded;
-                                }
-                            })),
-                    ),
-            )
-            .child(
-                v_flex()
-                    .min_w_0()
-                    .w_full()
-                    .px_2()
-                    .gap_1()
-                    .when(is_expanded, |parent| match configuration_view {
-                        Some(configuration_view) => parent.child(configuration_view),
-                        None => parent.child(Label::new(format!(
-                            "No configuration view for {provider_name}",
-                        ))),
-                    })
-                    .when(is_expanded && provider.is_authenticated(cx), |parent| {
-                        parent.child(
-                            Button::new(
-                                SharedString::from(format!("new-thread-{provider_id}")),
-                                "Start New Thread",
-                            )
-                            .full_width()
-                            .style(ButtonStyle::Outlined)
-                            .layer(ElevationIndex::ModalSurface)
-                            .start_icon(
-                                Icon::new(IconName::Thread)
-                                    .size(IconSize::Small)
-                                    .color(Color::Muted),
-                            )
-                            .label_size(LabelSize::Small)
-                            .on_click(cx.listener({
-                                let provider = provider.clone();
-                                move |_this, _event, _window, cx| {
-                                    cx.emit(AssistantConfigurationEvent::NewThread(
-                                        provider.clone(),
-                                    ))
-                                }
-                            })),
-                        )
-                    })
-                    .when(
-                        is_expanded && is_removable_provider(&provider.id(), cx),
-                        |this| {
-                            this.child(
-                                Button::new(
-                                    SharedString::from(format!("delete-provider-{provider_id}")),
-                                    "Remove Provider",
-                                )
-                                .full_width()
-                                .style(ButtonStyle::Outlined)
-                                .start_icon(
-                                    Icon::new(IconName::Trash)
-                                        .size(IconSize::Small)
-                                        .color(Color::Muted),
-                                )
-                                .label_size(LabelSize::Small)
-                                .on_click(cx.listener({
-                                    let provider = provider.clone();
-                                    move |this, _event, window, cx| {
-                                        this.delete_provider(provider.clone(), window, cx);
-                                    }
-                                })),
-                            )
-                        },
-                    ),
-            )
-    }
-
-    fn delete_provider(
-        &mut self,
-        provider: Arc<dyn LanguageModelProvider>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let fs = self.fs.clone();
-        let provider_id = provider.id();
-
-        cx.spawn_in(window, async move |_, cx| {
-            cx.update(|_window, cx| {
-                update_settings_file(fs.clone(), cx, {
-                    let provider_id = provider_id.clone();
-                    move |settings, _| {
-                        if let Some(ref mut openai_compatible) = settings
-                            .language_models
-                            .as_mut()
-                            .and_then(|lm| lm.openai_compatible.as_mut())
-                        {
-                            let key_to_remove: Arc<str> = Arc::from(provider_id.0.as_ref());
-                            openai_compatible.remove(&key_to_remove);
-                        }
-                    }
-                });
-            })
-            .log_err();
-
-            cx.update(|_window, cx| {
-                LanguageModelRegistry::global(cx).update(cx, {
-                    let provider_id = provider_id.clone();
-                    move |registry, cx| {
-                        registry.unregister_provider(provider_id, cx);
-                    }
-                })
-            })
-            .log_err();
-
-            anyhow::Ok(())
-        })
-        .detach_and_log_err(cx);
-    }
-
-    fn render_provider_configuration_section(
-        &mut self,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
-        let providers = LanguageModelRegistry::read_global(cx).visible_providers();
-
-        let popover_menu = PopoverMenu::new("add-provider-popover")
-            .trigger(
-                Button::new("add-provider", "Add Provider")
-                    .style(ButtonStyle::Outlined)
-                    .start_icon(
-                        Icon::new(IconName::Plus)
-                            .size(IconSize::Small)
-                            .color(Color::Muted),
-                    )
-                    .label_size(LabelSize::Small),
-            )
-            .menu({
-                let workspace = self.workspace.clone();
-                move |window, cx| {
-                    Some(ContextMenu::build(window, cx, |menu, _window, _cx| {
-                        menu.header("Compatible APIs").entry("OpenAI", None, {
-                            let workspace = workspace.clone();
-                            move |window, cx| {
-                                workspace
-                                    .update(cx, |workspace, cx| {
-                                        AddLlmProviderModal::toggle(
-                                            LlmCompatibleProvider::OpenAi,
-                                            workspace,
-                                            window,
-                                            cx,
-                                        );
-                                    })
-                                    .log_err();
-                            }
-                        })
-                    }))
-                }
-            })
-            .anchor(gpui::Anchor::TopRight)
-            .offset(gpui::Point {
-                x: px(0.0),
-                y: px(2.0),
-            });
-
-        v_flex()
-            .min_w_0()
-            .w_full()
-            .child(self.render_section_title(
-                "LLM Providers",
-                "Add at least one provider to use AI-powered features with Zed's native agent.",
-                popover_menu.into_any_element(),
-            ))
-            .child(
-                div()
-                    .w_full()
-                    .pl(DynamicSpacing::Base08.rems(cx))
-                    .pr(DynamicSpacing::Base20.rems(cx))
-                    .children(
-                        providers.into_iter().map(|provider| {
-                            self.render_provider_configuration_block(&provider, cx)
-                        }),
-                    ),
-            )
-    }
-
-    fn render_zed_plan_info(&self, plan: Option<Plan>, cx: &mut Context<Self>) -> impl IntoElement {
-        if let Some(plan) = plan {
-            let free_chip_bg = cx
-                .theme()
-                .colors()
-                .editor_background
-                .opacity(0.5)
-                .blend(cx.theme().colors().text_accent.opacity(0.05));
-
-            let pro_chip_bg = cx
-                .theme()
-                .colors()
-                .editor_background
-                .opacity(0.5)
-                .blend(cx.theme().colors().text_accent.opacity(0.2));
-
-            let (plan_name, label_color, bg_color) = match plan {
-                Plan::ZedFree => ("Free", Color::Default, free_chip_bg),
-                Plan::ZedProTrial => ("Pro Trial", Color::Accent, pro_chip_bg),
-                Plan::ZedPro => ("Pro", Color::Accent, pro_chip_bg),
-                Plan::ZedBusiness => ("Business", Color::Accent, pro_chip_bg),
-                Plan::ZedStudent => ("Student", Color::Accent, pro_chip_bg),
-            };
-
-            Chip::new(plan_name.to_string())
-                .bg_color(bg_color)
-                .label_color(label_color)
-                .into_any_element()
-        } else {
-            div().into_any_element()
-        }
     }
 
     fn render_context_servers_section(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1310,8 +971,7 @@ impl Render for AgentConfiguration {
                             .min_w_0()
                             .overflow_y_scroll()
                             .child(self.render_agent_servers_section(cx))
-                            .child(self.render_context_servers_section(cx))
-                            .child(self.render_provider_configuration_section(cx)),
+                            .child(self.render_context_servers_section(cx)),
                     )
                     .vertical_scrollbar_for(&self.scroll_handle, window, cx),
             )
@@ -1535,15 +1195,4 @@ fn find_text_in_buffer(
     } else {
         None
     }
-}
-
-// OpenAI-compatible providers are user-configured and can be removed,
-// whereas built-in providers (like Anthropic, OpenAI, Google, etc.) can't.
-//
-// If in the future we have more "API-compatible-type" of providers,
-// they should be included here as removable providers.
-fn is_removable_provider(provider_id: &LanguageModelProviderId, cx: &App) -> bool {
-    AllLanguageModelSettings::get_global(cx)
-        .openai_compatible
-        .contains_key(provider_id.0.as_ref())
 }

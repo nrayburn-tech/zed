@@ -1834,7 +1834,6 @@ pub mod evals {
             let user_store = cx.new(|cx| UserStore::new(client.clone(), cx));
             language_model::init(cx);
             RefreshLlmTokenListener::register(client.clone(), user_store.clone(), cx);
-            language_models::init(user_store, client.clone(), cx);
 
             cx.set_global(inline_assistant);
         });

@@ -248,7 +248,7 @@ impl LanguageModels {
             .map(|provider| (provider.id(), provider.name(), provider.authenticate(cx)))
             .collect::<Vec<_>>();
 
-        cx.spawn(async move |cx| {
+        cx.spawn(async move |_cx| {
             for (provider_id, provider_name, authenticate_task) in authenticate_all_providers {
                 if let Err(err) = authenticate_task.await {
                     match err {
@@ -291,8 +291,6 @@ impl LanguageModels {
                     }
                 }
             }
-
-            cx.update(language_models::update_environment_fallback_model);
         })
     }
 }

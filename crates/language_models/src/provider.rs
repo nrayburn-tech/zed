@@ -1,9 +1,0 @@
-pub mod cloud;
-pub mod copilot_chat;
-pub mod lmstudio;
-pub mod ollama;
-pub mod open_ai;
-pub mod open_ai_compatible;
-pub mod open_router;
-pub mod openai_subscribed;
-pub mod opencode;
