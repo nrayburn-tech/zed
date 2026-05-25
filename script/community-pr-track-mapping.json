@@ -3,43 +3,72 @@
   "tracks": [
     {
       "name": "Edit Predictions",
-      "labels": ["area:ai/edit prediction", "area:ai/supermaven", "area:ai/zeta"]
+      "labels": [
+        "area:ai/edit prediction",
+        "area:ai/supermaven",
+        "area:ai/zeta"
+      ]
     },
     {
       "name": "Tree-sitter",
-      "labels": ["area:tree-sitter"]
+      "labels": [
+        "area:tree-sitter"
+      ]
     },
     {
       "name": "Design",
-      "labels": ["area:design papercut"]
+      "labels": [
+        "area:design papercut"
+      ]
     },
     {
       "name": "Terminal",
-      "labels": ["area:integrations/terminal"]
+      "labels": [
+        "area:integrations/terminal"
+      ]
     },
     {
       "name": "Extensions",
-      "labels": ["area:extensions/infrastructure"]
+      "labels": [
+        "area:extensions/infrastructure"
+      ]
     },
     {
       "name": "Tasks & REPL",
-      "labels": ["area:tasks", "area:repl"]
+      "labels": [
+        "area:tasks",
+        "area:repl"
+      ]
     },
     {
       "name": "Markdown Preview",
-      "labels": ["area:preview/markdown", "area:preview/mermaid"]
+      "labels": [
+        "area:preview/markdown",
+        "area:preview/mermaid"
+      ]
     },
     {
       "name": "NixOS",
-      "labels": ["area:tooling/nix", "platform:nixos"]
+      "labels": [
+        "area:tooling/nix",
+        "platform:nixos"
+      ]
     },
     {
       "name": "Collab",
-      "labels": ["area:collab", "area:collab/audio", "area:collab/chat"]
+      "labels": [
+        "area:collab",
+        "area:collab/audio",
+        "area:collab/chat"
+      ]
     },
     {
       "name": "Vim, Helix & Keybinds",
-      "labels": ["area:controls/keybinds", "area:parity/helix", "area:parity/vim"]
+      "labels": [
+        "area:controls/keybinds",
+        "area:parity/helix",
+        "area:parity/vim"
+      ]
     },
     {
       "name": "Debugger",
@@ -62,7 +91,11 @@
     },
     {
       "name": "GPUI & Input",
-      "labels": ["area:controls/ime", "area:controls/mouse", "area:gpui"]
+      "labels": [
+        "area:controls/ime",
+        "area:controls/mouse",
+        "area:gpui"
+      ]
     },
     {
       "name": "Auth & Zed.dev",
@@ -77,11 +110,21 @@
     },
     {
       "name": "Linux",
-      "labels": ["area:tooling/flatpak", "platform:linux", "platform:linux/wayland", "platform:linux/x11"]
+      "labels": [
+        "area:tooling/flatpak",
+        "platform:linux",
+        "platform:linux/wayland",
+        "platform:linux/x11"
+      ]
     },
     {
       "name": "Windows, WSL, Remote, dev containers",
-      "labels": ["area:dev containers", "platform:remote", "platform:windows", "platform:windows/wsl"]
+      "labels": [
+        "area:dev containers",
+        "platform:remote",
+        "platform:windows",
+        "platform:windows/wsl"
+      ]
     },
     {
       "name": "Workspace & Navigation",
@@ -137,7 +180,6 @@
         "area:ai/agent thread",
         "area:ai/anthropic",
         "area:ai/assistant",
-        "area:ai/bedrock",
         "area:ai/codex",
         "area:ai/copilot",
         "area:ai/cursor",
@@ -159,7 +201,9 @@
     },
     {
       "name": "macOS",
-      "labels": ["platform:macOS"]
+      "labels": [
+        "platform:macOS"
+      ]
     },
     {
       "name": "Languages & LSP",

@@ -247,44 +247,6 @@ async for entry in result_stream:
 
 This SDK provides support for tool use, aka function calling. More details can be found in [the documentation](https://docs.anthropic.com/claude/docs/tool-use).
 
-## AWS Bedrock
-
-This library also provides support for the [Anthropic Bedrock API](https://aws.amazon.com/bedrock/claude/) if you install this library with the `bedrock` extra, e.g. `pip install -U anthropic[bedrock]`.
-
-You can then import and instantiate a separate `AnthropicBedrock` class, the rest of the API is the same.
-
-```py
-from anthropic import AnthropicBedrock
-
-client = AnthropicBedrock()
-
-message = client.messages.create(
-    max_tokens=1024,
-    messages=[
-        {
-            "role": "user",
-            "content": "Hello!",
-        }
-    ],
-    model="anthropic.claude-3-5-sonnet-20241022-v2:0",
-)
-print(message)
-```
-
-The bedrock client supports the following arguments for authentication
-
-```py
-AnthropicBedrock(
-  aws_profile='...',
-  aws_region='us-east'
-  aws_secret_key='...',
-  aws_access_key='...',
-  aws_session_token='...',
-)
-```
-
-For a more fully fledged example see [`examples/bedrock.py`](https://github.com/anthropics/anthropic-sdk-python/blob/main/examples/bedrock.py).
-
 ## Google Vertex
 
 This library also provides support for the [Anthropic Vertex API](https://cloud.google.com/vertex-ai?hl=en) if you install this library with the `vertex` extra, e.g. `pip install -U anthropic[vertex]`.

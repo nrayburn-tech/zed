@@ -5192,7 +5192,6 @@ mod tests {
                 "assistant2",
                 "auto_update",
                 "branch_picker",
-                "bedrock",
                 "branches",
                 "buffer_search",
                 "channel_modal",

@@ -11,7 +11,6 @@ use std::sync::Arc;
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
 pub struct AllLanguageModelSettingsContent {
     pub anthropic: Option<AnthropicSettingsContent>,
-    pub bedrock: Option<AmazonBedrockSettingsContent>,
     pub deepseek: Option<DeepseekSettingsContent>,
     pub google: Option<GoogleSettingsContent>,
     pub lmstudio: Option<LmStudioSettingsContent>,
@@ -54,47 +53,6 @@ pub struct AnthropicAvailableModel {
     pub extra_beta_headers: Vec<String>,
     /// The model's mode (e.g. thinking)
     pub mode: Option<ModelMode>,
-}
-
-#[with_fallible_options]
-#[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
-pub struct AmazonBedrockSettingsContent {
-    pub available_models: Option<Vec<BedrockAvailableModel>>,
-    pub endpoint_url: Option<String>,
-    pub region: Option<String>,
-    pub profile: Option<String>,
-    pub authentication_method: Option<BedrockAuthMethodContent>,
-    pub allow_global: Option<bool>,
-    /// The guardrail identifier (ARN or ID) to apply to Bedrock API requests.
-    pub guardrail_identifier: Option<String>,
-    /// The guardrail version to use. Defaults to "DRAFT" if not specified.
-    pub guardrail_version: Option<String>,
-}
-
-#[with_fallible_options]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
-pub struct BedrockAvailableModel {
-    pub name: String,
-    pub display_name: Option<String>,
-    pub max_tokens: u64,
-    pub cache_configuration: Option<LanguageModelCacheConfiguration>,
-    pub max_output_tokens: Option<u64>,
-    #[serde(serialize_with = "crate::serialize_optional_f32_with_two_decimal_places")]
-    pub default_temperature: Option<f32>,
-    pub mode: Option<ModelMode>,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
-pub enum BedrockAuthMethodContent {
-    #[serde(rename = "named_profile")]
-    NamedProfile,
-    #[serde(rename = "sso")]
-    SingleSignOn,
-    #[serde(rename = "api_key")]
-    ApiKey,
-    /// IMDSv2, PodIdentity, env vars, etc.
-    #[serde(rename = "default")]
-    Automatic,
 }
 
 #[with_fallible_options]
