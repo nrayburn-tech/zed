@@ -175,9 +175,6 @@ fn format_fim_prompt(
         EditPredictionPromptFormat::StarCoder => {
             format!("<fim_prefix>{prefix}<fim_suffix>{suffix}<fim_middle>")
         }
-        EditPredictionPromptFormat::DeepseekCoder => {
-            format!("<｜fim▁begin｜>{prefix}<｜fim▁hole｜>{suffix}<｜fim▁end｜>")
-        }
         EditPredictionPromptFormat::Qwen | EditPredictionPromptFormat::CodeGemma => {
             format!("<|fim_prefix|>{prefix}<|fim_suffix|>{suffix}<|fim_middle|>")
         }

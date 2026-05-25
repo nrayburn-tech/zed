@@ -631,7 +631,6 @@ mod tests {
                 ],
             ),
             ("openai", vec!["gpt-3.5-turbo", "gpt-5", "gpt-5-mini"]),
-            ("ollama", vec!["mistral", "deepseek"]),
         ]);
 
         // Results should preserve models order whenever possible.

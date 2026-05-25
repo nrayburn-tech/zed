@@ -160,7 +160,6 @@ fn infer_prompt_format(model: &str) -> Option<EditPredictionPromptFormat> {
         "zeta2.1" => EditPredictionPromptFormat::Zeta(ZetaVersion::Zeta2_1),
         "codellama" | "code-llama" => EditPredictionPromptFormat::CodeLlama,
         "starcoder" | "starcoder2" | "starcoderbase" => EditPredictionPromptFormat::StarCoder,
-        "deepseek-coder" | "deepseek-coder-v2" => EditPredictionPromptFormat::DeepseekCoder,
         "qwen2.5-coder" | "qwen-coder" | "qwen" => EditPredictionPromptFormat::Qwen,
         "codegemma" => EditPredictionPromptFormat::CodeGemma,
         "codestral" | "mistral" => EditPredictionPromptFormat::Codestral,

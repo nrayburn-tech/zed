@@ -11,7 +11,6 @@ pub enum IconName {
     AcpRegistry,
     AiAnthropic,
     AiClaude,
-    AiDeepSeek,
     AiEdit,
     AiGemini,
     AiGoogle,

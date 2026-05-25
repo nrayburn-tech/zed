@@ -382,7 +382,6 @@ class ZedAgent(BaseInstalledAgent):
             "openai": "OPENAI_API_KEY",
             "google": "GEMINI_API_KEY",
             "gemini": "GEMINI_API_KEY",
-            "deepseek": "DEEPSEEK_API_KEY",
             "mistral": "MISTRAL_API_KEY",
         }
 

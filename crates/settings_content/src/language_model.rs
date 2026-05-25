@@ -11,7 +11,6 @@ use std::sync::Arc;
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
 pub struct AllLanguageModelSettingsContent {
     pub anthropic: Option<AnthropicSettingsContent>,
-    pub deepseek: Option<DeepseekSettingsContent>,
     pub google: Option<GoogleSettingsContent>,
     pub lmstudio: Option<LmStudioSettingsContent>,
     pub mistral: Option<MistralSettingsContent>,
@@ -162,22 +161,6 @@ pub struct LmStudioAvailableModel {
     pub max_tokens: u64,
     pub supports_tool_calls: bool,
     pub supports_images: bool,
-}
-
-#[with_fallible_options]
-#[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
-pub struct DeepseekSettingsContent {
-    pub api_url: Option<String>,
-    pub available_models: Option<Vec<DeepseekAvailableModel>>,
-}
-
-#[with_fallible_options]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
-pub struct DeepseekAvailableModel {
-    pub name: String,
-    pub display_name: Option<String>,
-    pub max_tokens: u64,
-    pub max_output_tokens: Option<u64>,
 }
 
 #[with_fallible_options]

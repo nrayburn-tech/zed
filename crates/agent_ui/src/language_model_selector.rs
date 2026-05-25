@@ -699,7 +699,6 @@ mod tests {
             ("openai", "gpt-5"),
             ("openai", "gpt-5-mini"),
             ("ollama", "mistral"),
-            ("ollama", "deepseek"),
         ]);
         let matcher = ModelMatcher::new(
             models,
@@ -731,7 +730,6 @@ mod tests {
             ("openai", "gpt-5"),
             ("openai", "gpt-5-mini"),
             ("ollama", "mistral"),
-            ("ollama", "deepseek"),
         ]);
         let matcher = ModelMatcher::new(
             models,
@@ -748,7 +746,7 @@ mod tests {
 
         // Model provider should be searchable as well
         let results = matcher.fuzzy_search("ol"); // meaning "ollama"
-        assert_models_eq(results, vec!["ollama/mistral", "ollama/deepseek"]);
+        assert_models_eq(results, vec!["ollama/mistral"]);
 
         // Fuzzy search - search for Claude to get the Thinking variant
         let results = matcher.fuzzy_search("thinking");

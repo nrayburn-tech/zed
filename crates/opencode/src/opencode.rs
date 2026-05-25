@@ -119,10 +119,6 @@ pub enum Model {
     Gemini3_5Flash,
 
     // -- OpenAI Chat Completions protocol models --
-    #[serde(rename = "deepseek-v4-pro")]
-    DeepSeekV4Pro,
-    #[serde(rename = "deepseek-v4-flash")]
-    DeepSeekV4Flash,
     #[serde(rename = "minimax-m2.5")]
     MiniMaxM2_5,
     #[serde(rename = "glm-5")]
@@ -197,11 +193,7 @@ impl Model {
             | Self::Qwen3_6Plus => &[OpenCodeSubscription::Zen, OpenCodeSubscription::Go],
 
             // Go-only models
-            Self::MiniMaxM2_7
-            | Self::MimoV2_5Pro
-            | Self::MimoV2_5
-            | Self::DeepSeekV4Pro
-            | Self::DeepSeekV4Flash => &[OpenCodeSubscription::Go],
+            Self::MiniMaxM2_7 | Self::MimoV2_5Pro | Self::MimoV2_5 => &[OpenCodeSubscription::Go],
 
             // Free models
             Self::Nemotron3SuperFree | Self::BigPickle => &[OpenCodeSubscription::Free],
@@ -247,8 +239,6 @@ impl Model {
             Self::Gemini3Flash => "gemini-3-flash",
             Self::Gemini3_5Flash => "gemini-3.5-flash",
 
-            Self::DeepSeekV4Pro => "deepseek-v4-pro",
-            Self::DeepSeekV4Flash => "deepseek-v4-flash",
             Self::MiniMaxM2_5 => "minimax-m2.5",
             Self::Glm5 => "glm-5",
             Self::Glm5_1 => "glm-5.1",
@@ -300,8 +290,6 @@ impl Model {
             Self::Gemini3Flash => "Gemini 3 Flash",
             Self::Gemini3_5Flash => "Gemini 3.5 Flash",
 
-            Self::DeepSeekV4Pro => "DeepSeek V4 Pro",
-            Self::DeepSeekV4Flash => "DeepSeek V4 Flash",
             Self::MiniMaxM2_5 => "MiniMax M2.5",
             Self::Glm5 => "GLM 5",
             Self::Glm5_1 => "GLM 5.1",
@@ -372,8 +360,6 @@ impl Model {
             | Self::MimoV2_5
             | Self::Qwen3_5Plus
             | Self::Qwen3_6Plus
-            | Self::DeepSeekV4Pro
-            | Self::DeepSeekV4Flash
             | Self::BigPickle
             | Self::Nemotron3SuperFree => ApiProtocol::OpenAiChat,
 
@@ -383,9 +369,7 @@ impl Model {
 
     pub fn interleaved_reasoning(&self) -> bool {
         match self {
-            Self::DeepSeekV4Pro
-            | Self::DeepSeekV4Flash
-            | Self::KimiK2_5
+            Self::KimiK2_5
             | Self::KimiK2_6
             | Self::MimoV2_5
             | Self::MimoV2_5Pro
@@ -447,7 +431,6 @@ impl Model {
             Self::Qwen3_5Plus | Self::Qwen3_6Plus => 262_144,
             Self::BigPickle => 200_000,
             Self::Nemotron3SuperFree => 204_800,
-            Self::DeepSeekV4Pro | Self::DeepSeekV4Flash => 1_000_000,
 
             Self::Custom { max_tokens, .. } => *max_tokens,
         }
@@ -506,7 +489,6 @@ impl Model {
             Self::KimiK2_6 | Self::KimiK2_5 => Some(65_536),
             Self::GrokBuild0_1 => Some(256_000),
             Self::Qwen3_5Plus | Self::Qwen3_6Plus => Some(65_536),
-            Self::DeepSeekV4Pro | Self::DeepSeekV4Flash => Some(384_000),
             Self::Nemotron3SuperFree => Some(128_000),
             Self::MimoV2_5Pro | Self::MimoV2_5 => Some(128_000),
 
@@ -570,8 +552,6 @@ impl Model {
             | Self::Glm5_1
             | Self::MiniMaxM2_7
             | Self::MimoV2_5Pro
-            | Self::DeepSeekV4Pro
-            | Self::DeepSeekV4Flash
             | Self::BigPickle
             | Self::Nemotron3SuperFree => false,
 
@@ -591,13 +571,6 @@ impl Model {
                 ReasoningEffort::Low,
                 ReasoningEffort::Medium,
                 ReasoningEffort::High,
-            ]),
-
-            Self::DeepSeekV4Pro | Self::DeepSeekV4Flash => Some(vec![
-                ReasoningEffort::Low,
-                ReasoningEffort::Medium,
-                ReasoningEffort::High,
-                ReasoningEffort::XHigh,
             ]),
 
             Self::Custom {

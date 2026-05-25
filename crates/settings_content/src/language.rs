@@ -191,7 +191,6 @@ pub enum EditPredictionPromptFormatContent {
     Zeta2_1,
     CodeLlama,
     StarCoder,
-    DeepseekCoder,
     Qwen,
     CodeGemma,
     Codestral,

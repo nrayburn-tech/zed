@@ -4768,18 +4768,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deepseek"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures 0.3.32",
- "http_client",
- "schemars 1.0.4",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "deflate64"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9641,7 +9629,6 @@ dependencies = [
  "copilot_ui",
  "credentials_provider",
  "db",
- "deepseek",
  "extension",
  "extension_host",
  "feature_flags",

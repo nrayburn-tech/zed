@@ -4,9 +4,9 @@ use collections::HashMap;
 use settings::RegisterSetting;
 
 use crate::provider::{
-    anthropic::AnthropicSettings, cloud::ZedDotDevSettings, deepseek::DeepSeekSettings,
-    google::GoogleSettings, lmstudio::LmStudioSettings, mistral::MistralSettings,
-    ollama::OllamaSettings, open_ai::OpenAiSettings, open_ai_compatible::OpenAiCompatibleSettings,
+    anthropic::AnthropicSettings, cloud::ZedDotDevSettings, google::GoogleSettings,
+    lmstudio::LmStudioSettings, mistral::MistralSettings, ollama::OllamaSettings,
+    open_ai::OpenAiSettings, open_ai_compatible::OpenAiCompatibleSettings,
     open_router::OpenRouterSettings, opencode::OpenCodeSettings,
     vercel_ai_gateway::VercelAiGatewaySettings, x_ai::XAiSettings,
 };
@@ -14,7 +14,6 @@ use crate::provider::{
 #[derive(Debug, RegisterSetting)]
 pub struct AllLanguageModelSettings {
     pub anthropic: AnthropicSettings,
-    pub deepseek: DeepSeekSettings,
     pub google: GoogleSettings,
     pub lmstudio: LmStudioSettings,
     pub mistral: MistralSettings,
@@ -34,7 +33,6 @@ impl settings::Settings for AllLanguageModelSettings {
     fn from_settings(content: &settings::SettingsContent) -> Self {
         let language_models = content.language_models.clone().unwrap();
         let anthropic = language_models.anthropic.unwrap();
-        let deepseek = language_models.deepseek.unwrap();
         let google = language_models.google.unwrap();
         let lmstudio = language_models.lmstudio.unwrap();
         let mistral = language_models.mistral.unwrap();
@@ -50,10 +48,6 @@ impl settings::Settings for AllLanguageModelSettings {
             anthropic: AnthropicSettings {
                 api_url: anthropic.api_url.unwrap(),
                 available_models: anthropic.available_models.unwrap_or_default(),
-            },
-            deepseek: DeepSeekSettings {
-                api_url: deepseek.api_url.unwrap(),
-                available_models: deepseek.available_models.unwrap_or_default(),
             },
             google: GoogleSettings {
                 api_url: google.api_url.unwrap(),

@@ -38,7 +38,6 @@
 /crates/copilot/ @zed-industries/ai-team
 /crates/copilot_chat/ @zed-industries/ai-team
 /crates/copilot_ui/ @zed-industries/ai-team
-/crates/deepseek/ @zed-industries/ai-team
 /crates/edit_prediction/ @zed-industries/ai-team
 /crates/edit_prediction_cli/ @zed-industries/ai-team
 /crates/edit_prediction_context/ @zed-industries/ai-team

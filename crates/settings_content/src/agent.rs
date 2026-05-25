@@ -424,7 +424,6 @@ impl JsonSchema for LanguageModelProviderSetting {
                     "enum": [
                         "anthropic",
                         "copilot_chat",
-                        "deepseek",
                         "google",
                         "lmstudio",
                         "mistral",
