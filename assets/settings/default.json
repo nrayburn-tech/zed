@@ -1706,11 +1706,6 @@
       "proxy_no_verify": null,
       "enable_next_edit_suggestions": true
     },
-    "codestral": {
-      "api_url": "https://codestral.mistral.ai",
-      "model": "codestral-latest",
-      "max_tokens": 150
-    },
     "ollama": {
       "api_url": "http://localhost:11434",
       "model": "qwen2.5-coder:7b-base",
@@ -2519,9 +2514,6 @@
     },
     "lmstudio": {
       "api_url": "http://localhost:1234/api/v0"
-    },
-    "mistral": {
-      "api_url": "https://api.mistral.ai/v1"
     },
     "zed.dev": {}
   },

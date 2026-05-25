@@ -698,7 +698,6 @@ mod tests {
             ("openai", "gpt-3.5-turbo"),
             ("openai", "gpt-5"),
             ("openai", "gpt-5-mini"),
-            ("ollama", "mistral"),
         ]);
         let matcher = ModelMatcher::new(
             models,
@@ -729,7 +728,6 @@ mod tests {
             ("openai", "gpt-3.5-turbo"),
             ("openai", "gpt-5"),
             ("openai", "gpt-5-mini"),
-            ("ollama", "mistral"),
         ]);
         let matcher = ModelMatcher::new(
             models,

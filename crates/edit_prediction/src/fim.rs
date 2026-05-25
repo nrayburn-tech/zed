@@ -178,9 +178,6 @@ fn format_fim_prompt(
         EditPredictionPromptFormat::Qwen | EditPredictionPromptFormat::CodeGemma => {
             format!("<|fim_prefix|>{prefix}<|fim_suffix|>{suffix}<|fim_middle|>")
         }
-        EditPredictionPromptFormat::Codestral => {
-            format!("[SUFFIX]{suffix}[PREFIX]{prefix}")
-        }
         EditPredictionPromptFormat::Glm => {
             format!("<|code_prefix|>{prefix}<|code_suffix|>{suffix}<|code_middle|>")
         }

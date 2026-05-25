@@ -4,15 +4,14 @@ use collections::HashMap;
 use settings::RegisterSetting;
 
 use crate::provider::{
-    cloud::ZedDotDevSettings, lmstudio::LmStudioSettings, mistral::MistralSettings,
-    ollama::OllamaSettings, open_ai::OpenAiSettings, open_ai_compatible::OpenAiCompatibleSettings,
+    cloud::ZedDotDevSettings, lmstudio::LmStudioSettings, ollama::OllamaSettings,
+    open_ai::OpenAiSettings, open_ai_compatible::OpenAiCompatibleSettings,
     open_router::OpenRouterSettings, opencode::OpenCodeSettings,
 };
 
 #[derive(Debug, RegisterSetting)]
 pub struct AllLanguageModelSettings {
     pub lmstudio: LmStudioSettings,
-    pub mistral: MistralSettings,
     pub ollama: OllamaSettings,
     pub opencode: OpenCodeSettings,
     pub open_router: OpenRouterSettings,
@@ -27,7 +26,6 @@ impl settings::Settings for AllLanguageModelSettings {
     fn from_settings(content: &settings::SettingsContent) -> Self {
         let language_models = content.language_models.clone().unwrap();
         let lmstudio = language_models.lmstudio.unwrap();
-        let mistral = language_models.mistral.unwrap();
         let ollama = language_models.ollama.unwrap();
         let opencode = language_models.opencode.unwrap();
         let open_router = language_models.open_router.unwrap();
@@ -38,10 +36,6 @@ impl settings::Settings for AllLanguageModelSettings {
             lmstudio: LmStudioSettings {
                 api_url: lmstudio.api_url.unwrap(),
                 available_models: lmstudio.available_models.unwrap_or_default(),
-            },
-            mistral: MistralSettings {
-                api_url: mistral.api_url.unwrap(),
-                available_models: mistral.available_models.unwrap_or_default(),
             },
             ollama: OllamaSettings {
                 api_url: ollama.api_url.unwrap(),

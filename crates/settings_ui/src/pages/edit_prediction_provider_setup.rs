@@ -1,4 +1,3 @@
-use codestral::{CODESTRAL_API_URL, codestral_api_key_state, codestral_api_url};
 use edit_prediction::{
     ApiKeyState,
     mercury::{MERCURY_CREDENTIALS_URL, mercury_api_token},
@@ -39,30 +38,6 @@ pub(crate) fn render_edit_prediction_setup_page(
                 mercury_api_token(cx),
                 |_cx| MERCURY_CREDENTIALS_URL,
                 None,
-                window,
-                cx,
-            )
-            .into_any_element(),
-        ),
-        Some(
-            render_api_key_provider(
-                IconName::AiMistral,
-                "Codestral",
-                ApiKeyDocs::Link {
-                    dashboard_url: "https://console.mistral.ai/codestral".into(),
-                },
-                codestral_api_key_state(cx),
-                |cx| codestral_api_url(cx),
-                Some(
-                    settings_window
-                        .render_sub_page_items_section(
-                            codestral_settings().iter().enumerate(),
-                            true,
-                            window,
-                            cx,
-                        )
-                        .into_any_element(),
-                ),
                 window,
                 cx,
             )
@@ -613,107 +588,6 @@ fn open_ai_compatible_settings() -> Box<[SettingsPageItem]> {
                 json_path: Some("edit_predictions.open_ai_compatible_api.max_output_tokens"),
             }),
             metadata: None,
-            files: USER,
-        }),
-    ])
-}
-
-fn codestral_settings() -> Box<[SettingsPageItem]> {
-    Box::new([
-        SettingsPageItem::SettingItem(SettingItem {
-            title: "API URL",
-            description: "The API URL to use for Codestral.",
-            field: Box::new(SettingField {
-                pick: |settings| {
-                    settings
-                        .project
-                        .all_languages
-                        .edit_predictions
-                        .as_ref()?
-                        .codestral
-                        .as_ref()?
-                        .api_url
-                        .as_ref()
-                },
-                write: |settings, value, _app: &App| {
-                    settings
-                        .project
-                        .all_languages
-                        .edit_predictions
-                        .get_or_insert_default()
-                        .codestral
-                        .get_or_insert_default()
-                        .api_url = value;
-                },
-                json_path: Some("edit_predictions.codestral.api_url"),
-            }),
-            metadata: Some(Box::new(SettingsFieldMetadata {
-                placeholder: Some(CODESTRAL_API_URL),
-                ..Default::default()
-            })),
-            files: USER,
-        }),
-        SettingsPageItem::SettingItem(SettingItem {
-            title: "Max Tokens",
-            description: "The maximum number of tokens to generate.",
-            field: Box::new(SettingField {
-                pick: |settings| {
-                    settings
-                        .project
-                        .all_languages
-                        .edit_predictions
-                        .as_ref()?
-                        .codestral
-                        .as_ref()?
-                        .max_tokens
-                        .as_ref()
-                },
-                write: |settings, value, _app: &App| {
-                    settings
-                        .project
-                        .all_languages
-                        .edit_predictions
-                        .get_or_insert_default()
-                        .codestral
-                        .get_or_insert_default()
-                        .max_tokens = value;
-                },
-                json_path: Some("edit_predictions.codestral.max_tokens"),
-            }),
-            metadata: None,
-            files: USER,
-        }),
-        SettingsPageItem::SettingItem(SettingItem {
-            title: "Model",
-            description: "The Codestral model id to use.",
-            field: Box::new(SettingField {
-                pick: |settings| {
-                    settings
-                        .project
-                        .all_languages
-                        .edit_predictions
-                        .as_ref()?
-                        .codestral
-                        .as_ref()?
-                        .model
-                        .as_ref()
-                },
-                write: |settings, value, _app: &App| {
-                    settings
-                        .project
-                        .all_languages
-                        .edit_predictions
-                        .get_or_insert_default()
-                        .codestral
-                        .get_or_insert_default()
-                        .model = value;
-                },
-                json_path: Some("edit_predictions.codestral.model"),
-            }),
-            metadata: Some(Box::new(SettingsFieldMetadata {
-                placeholder: Some("codestral-latest"),
-                ..Default::default()
-            })),
             files: USER,
         }),
     ])

@@ -379,7 +379,6 @@ class ZedAgent(BaseInstalledAgent):
         provider = self.model_name.split("/", 1)[0]
         provider_env_map = {
             "openai": "OPENAI_API_KEY",
-            "mistral": "MISTRAL_API_KEY",
         }
 
         env_var = provider_env_map.get(provider)

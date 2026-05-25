@@ -1,5 +1,4 @@
 use client::{Client, UserStore};
-use codestral::{CodestralEditPredictionDelegate, load_codestral_api_key};
 use collections::HashMap;
 use copilot::CopilotEditPredictionDelegate;
 use edit_prediction::{EditPredictionModel, ZedEditPredictionDelegate};
@@ -119,7 +118,6 @@ fn edit_prediction_provider_config_for_settings(cx: &App) -> Option<EditPredicti
         EditPredictionProvider::Zed => {
             Some(EditPredictionProviderConfig::Zed(EditPredictionModel::Zeta))
         }
-        EditPredictionProvider::Codestral => Some(EditPredictionProviderConfig::Codestral),
         EditPredictionProvider::Ollama | EditPredictionProvider::OpenAiCompatibleApi => {
             let custom_settings = if provider == EditPredictionProvider::Ollama {
                 settings.ollama.as_ref()?
@@ -162,7 +160,6 @@ fn infer_prompt_format(model: &str) -> Option<EditPredictionPromptFormat> {
         "starcoder" | "starcoder2" | "starcoderbase" => EditPredictionPromptFormat::StarCoder,
         "qwen2.5-coder" | "qwen-coder" | "qwen" => EditPredictionPromptFormat::Qwen,
         "codegemma" => EditPredictionPromptFormat::CodeGemma,
-        "codestral" | "mistral" => EditPredictionPromptFormat::Codestral,
         "glm" | "glm-4" | "glm-4.5" => EditPredictionPromptFormat::Glm,
         _ => {
             return None;
@@ -173,7 +170,6 @@ fn infer_prompt_format(model: &str) -> Option<EditPredictionPromptFormat> {
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum EditPredictionProviderConfig {
     Copilot,
-    Codestral,
     Zed(EditPredictionModel),
 }
 
@@ -181,7 +177,6 @@ impl EditPredictionProviderConfig {
     fn name(&self) -> &'static str {
         match self {
             EditPredictionProviderConfig::Copilot => "Copilot",
-            EditPredictionProviderConfig::Codestral => "Codestral",
             EditPredictionProviderConfig::Zed(model) => match model {
                 EditPredictionModel::Zeta => "Zeta",
                 EditPredictionModel::Fim { .. } => "FIM",
@@ -204,9 +199,6 @@ fn assign_edit_prediction_providers(
     user_store: Entity<UserStore>,
     cx: &mut App,
 ) {
-    if provider_config == Some(EditPredictionProviderConfig::Codestral) {
-        load_codestral_api_key(cx).detach();
-    }
     for (editor, window) in editors.borrow().iter() {
         _ = window.update(cx, |_window, window, cx| {
             _ = editor.update(cx, |editor, cx| {
@@ -268,11 +260,6 @@ fn assign_edit_prediction_provider(
                 let provider = cx.new(|_| CopilotEditPredictionDelegate::new(copilot));
                 editor.set_edit_prediction_provider(Some(provider), window, cx);
             }
-        }
-        Some(EditPredictionProviderConfig::Codestral) => {
-            let http_client = client.http_client();
-            let provider = cx.new(|_| CodestralEditPredictionDelegate::new(http_client));
-            editor.set_edit_prediction_provider(Some(provider), window, cx);
         }
         Some(EditPredictionProviderConfig::Zed(model)) => {
             let ep_store = edit_prediction::EditPredictionStore::global(client, &user_store, cx);
@@ -378,7 +365,7 @@ mod tests {
                 store.update_user_settings(cx, |settings| {
                     settings.project.all_languages.edit_predictions =
                         Some(settings::EditPredictionSettingsContent {
-                            provider: Some(EditPredictionProvider::Codestral),
+                            provider: Some(EditPredictionProvider::Mercury),
                             ..Default::default()
                         });
                 });

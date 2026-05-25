@@ -3131,27 +3131,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "codestral"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "edit_prediction",
- "edit_prediction_types",
- "futures 0.3.32",
- "gpui",
- "http_client",
- "icons",
- "language",
- "language_model",
- "log",
- "serde",
- "serde_json",
- "text",
- "zed_credentials_provider",
- "zeta_prompt",
-]
-
-[[package]]
 name = "collab"
 version = "0.44.0"
 dependencies = [
@@ -5378,7 +5357,6 @@ dependencies = [
  "buffer_diff",
  "client",
  "cloud_llm_client",
- "codestral",
  "collections",
  "command_palette_hooks",
  "copilot",
@@ -9606,7 +9584,6 @@ dependencies = [
  "lmstudio",
  "log",
  "menu",
- "mistral",
  "oauth_callback_server",
  "ollama",
  "open_ai",
@@ -10816,19 +10793,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "536bfad37a309d62069485248eeaba1e8d9853aaf951caaeaed0585a95346f08"
 dependencies = [
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "mistral"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures 0.3.32",
- "http_client",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "strum 0.27.2",
 ]
 
 [[package]]
@@ -16138,7 +16102,6 @@ dependencies = [
  "agent_skills",
  "anyhow",
  "audio",
- "codestral",
  "component",
  "copilot",
  "copilot_ui",
@@ -22397,7 +22360,6 @@ dependencies = [
  "cli",
  "client",
  "clock",
- "codestral",
  "collab_ui",
  "collections",
  "command_palette",

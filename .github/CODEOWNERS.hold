@@ -33,7 +33,6 @@
 /crates/ai_onboarding/ @zed-industries/ai-team
 /crates/anthropic/ @zed-industries/ai-team
 /crates/cloud_llm_client/ @zed-industries/ai-team
-/crates/codestral/ @zed-industries/ai-team
 /crates/context_server/ @zed-industries/ai-team
 /crates/copilot/ @zed-industries/ai-team
 /crates/copilot_chat/ @zed-industries/ai-team
@@ -48,7 +47,6 @@
 /crates/language_model/ @zed-industries/ai-team
 /crates/language_models/ @zed-industries/ai-team
 /crates/lmstudio/ @zed-industries/ai-team
-/crates/mistral/ @zed-industries/ai-team
 /crates/ollama/ @zed-industries/ai-team
 /crates/open_ai/ @zed-industries/ai-team
 /crates/open_router/ @zed-industries/ai-team

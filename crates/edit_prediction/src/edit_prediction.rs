@@ -2286,9 +2286,7 @@ fn is_ep_store_provider(provider: EditPredictionProvider) -> bool {
         | EditPredictionProvider::Mercury
         | EditPredictionProvider::Ollama
         | EditPredictionProvider::OpenAiCompatibleApi => true,
-        EditPredictionProvider::None
-        | EditPredictionProvider::Copilot
-        | EditPredictionProvider::Codestral => false,
+        EditPredictionProvider::None | EditPredictionProvider::Copilot => false,
     }
 }
 
@@ -2323,9 +2321,7 @@ impl EditPredictionStore {
                 EditPredictionProvider::Zed | EditPredictionProvider::Mercury => (true, 2),
                 EditPredictionProvider::Ollama => (false, 1),
                 EditPredictionProvider::OpenAiCompatibleApi => (false, 2),
-                EditPredictionProvider::None
-                | EditPredictionProvider::Copilot
-                | EditPredictionProvider::Codestral => {
+                EditPredictionProvider::None | EditPredictionProvider::Copilot => {
                     log::error!("queue_prediction_refresh called with non-store provider");
                     return;
                 }

@@ -190,7 +190,6 @@ static EXTENSION_TO_REGISTRY_IDS: LazyLock<HashMap<&'static str, &'static str>> 
     LazyLock::new(|| {
         HashMap::from_iter([
             ("opencode", "opencode"),
-            ("mistral-vibe", "mistral-vibe"),
             ("auggie", "auggie"),
             ("stakpak", "stakpak"),
             ("codebuddy", "codebuddy-code"),

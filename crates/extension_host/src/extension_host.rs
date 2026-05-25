@@ -87,7 +87,6 @@ static SUPPRESSED_EXTENSIONS: LazyLock<FxHashSet<&str>> = LazyLock::new(|| {
         "basher",
         // ACP
         "opencode",
-        "mistral-vibe",
         "auggie",
         "stakpak",
         "codebuddy",

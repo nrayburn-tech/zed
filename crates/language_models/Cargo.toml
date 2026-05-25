@@ -42,7 +42,6 @@ language_models_cloud.workspace = true
 lmstudio = { workspace = true, features = ["schemars"] }
 log.workspace = true
 menu.workspace = true
-mistral = { workspace = true, features = ["schemars"] }
 oauth_callback_server.workspace = true
 ollama = { workspace = true, features = ["schemars"] }
 open_ai = { workspace = true, features = ["schemars"] }

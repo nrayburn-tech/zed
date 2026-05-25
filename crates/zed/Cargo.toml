@@ -82,7 +82,6 @@ channel.workspace = true
 clap.workspace = true
 cli.workspace = true
 client.workspace = true
-codestral.workspace = true
 collab_ui.workspace = true
 collections.workspace = true
 command_palette.workspace = true
@@ -118,7 +117,7 @@ git_ui.workspace = true
 go_to_line.workspace = true
 system_specs.workspace = true
 gpui = { workspace = true, features = ["input-latency-histogram"] }
-gpui_platform = {workspace = true, features=["screen-capture", "font-kit", "wayland", "x11"]}
+gpui_platform = { workspace = true, features = ["screen-capture", "font-kit", "wayland", "x11"] }
 image = { workspace = true, optional = true }
 semver.workspace = true
 tempfile = { workspace = true, optional = true }

@@ -472,8 +472,6 @@ pub struct EditPredictionSettings {
     pub mode: settings::EditPredictionsMode,
     /// Settings specific to GitHub Copilot.
     pub copilot: CopilotSettings,
-    /// Settings specific to Codestral.
-    pub codestral: CodestralSettings,
     /// Settings specific to Ollama.
     pub ollama: Option<OpenAiCompatibleEditPredictionSettings>,
     pub open_ai_compatible_api: Option<OpenAiCompatibleEditPredictionSettings>,
@@ -517,16 +515,6 @@ pub struct CopilotSettings {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct CodestralSettings {
-    /// Model to use for completions.
-    pub model: Option<String>,
-    /// Maximum tokens to generate.
-    pub max_tokens: Option<u32>,
-    /// Custom API URL to use for Codestral.
-    pub api_url: Option<String>,
-}
-
-#[derive(Clone, Debug, Default)]
 pub struct OpenAiCompatibleEditPredictionSettings {
     /// Model to use for completions.
     pub model: String,
@@ -548,7 +536,6 @@ pub enum EditPredictionPromptFormat {
     StarCoder,
     Qwen,
     CodeGemma,
-    Codestral,
     Glm,
 }
 
@@ -571,7 +558,6 @@ impl From<EditPredictionPromptFormatContent> for EditPredictionPromptFormat {
             EditPredictionPromptFormatContent::StarCoder => Self::StarCoder,
             EditPredictionPromptFormatContent::Qwen => Self::Qwen,
             EditPredictionPromptFormatContent::CodeGemma => Self::CodeGemma,
-            EditPredictionPromptFormatContent::Codestral => Self::Codestral,
             EditPredictionPromptFormatContent::Glm => Self::Glm,
         }
     }
@@ -838,13 +824,6 @@ impl settings::Settings for AllLanguageSettings {
             enable_next_edit_suggestions: copilot.enable_next_edit_suggestions,
         };
 
-        let codestral = edit_predictions.codestral.unwrap();
-        let codestral_settings = CodestralSettings {
-            model: codestral.model,
-            max_tokens: codestral.max_tokens,
-            api_url: codestral.api_url,
-        };
-
         let ollama = edit_predictions.ollama.unwrap();
         let ollama_settings = ollama
             .model
@@ -905,7 +884,6 @@ impl settings::Settings for AllLanguageSettings {
                     .collect(),
                 mode: edit_predictions_mode,
                 copilot: copilot_settings,
-                codestral: codestral_settings,
                 ollama: ollama_settings,
                 open_ai_compatible_api: openai_compatible_settings,
                 allow_data_collection: edit_predictions.allow_data_collection.unwrap_or_default(),

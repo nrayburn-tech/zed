@@ -22,7 +22,6 @@ agent_skills.workspace = true
 anyhow.workspace = true
 audio.workspace = true
 component.workspace = true
-codestral.workspace = true
 copilot.workspace = true
 copilot_ui.workspace = true
 cpal.workspace = true
