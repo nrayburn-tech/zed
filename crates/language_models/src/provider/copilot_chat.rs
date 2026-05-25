@@ -266,9 +266,7 @@ impl LanguageModel for CopilotChatLanguageModel {
     fn tool_input_format(&self) -> LanguageModelToolSchemaFormat {
         match self.model.vendor() {
             ModelVendor::OpenAI => LanguageModelToolSchemaFormat::JsonSchema,
-            ModelVendor::Google | ModelVendor::Unknown => {
-                LanguageModelToolSchemaFormat::JsonSchemaSubset
-            }
+            ModelVendor::Unknown => LanguageModelToolSchemaFormat::JsonSchemaSubset,
         }
     }
 

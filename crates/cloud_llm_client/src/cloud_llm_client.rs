@@ -86,7 +86,6 @@ impl FromStr for UsageLimit {
 #[strum(serialize_all = "snake_case")]
 pub enum LanguageModelProvider {
     OpenAi,
-    Google,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

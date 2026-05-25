@@ -24,7 +24,6 @@ use ui::{
 use ui_input::InputField;
 use util::ResultExt;
 
-use crate::provider::google::{GoogleEventMapper, into_google};
 use crate::provider::open_ai::{
     OpenAiEventMapper, OpenAiResponseEventMapper, into_open_ai, into_open_ai_response,
 };
@@ -257,7 +256,6 @@ impl LanguageModelProvider for OpenCodeLanguageModelProvider {
             let protocol = match model.protocol.as_str() {
                 "openai_responses" => ApiProtocol::OpenAiResponses,
                 "openai_chat" => ApiProtocol::OpenAiChat,
-                "google" => ApiProtocol::Google,
                 _ => ApiProtocol::OpenAiChat, // default fallback
             };
             let subscription = match model.subscription {
@@ -444,37 +442,6 @@ impl OpenCodeLanguageModel {
 
         async move { Ok(future.await?.boxed()) }.boxed()
     }
-
-    fn stream_google(
-        &self,
-        request: google_ai::GenerateContentRequest,
-        http_client: Arc<dyn HttpClient>,
-        cx: &AsyncApp,
-    ) -> BoxFuture<
-        'static,
-        Result<futures::stream::BoxStream<'static, Result<google_ai::GenerateContentResponse>>>,
-    > {
-        let api_url = self.base_api_url(cx);
-        let api_key = self.api_key(cx);
-
-        let future = self.request_limiter.stream(async move {
-            let Some(api_key) = api_key else {
-                return Err(LanguageModelCompletionError::NoApiKey {
-                    provider: PROVIDER_NAME,
-                });
-            };
-            let request = opencode::stream_generate_content(
-                http_client.as_ref(),
-                &api_url,
-                &api_key,
-                request,
-            );
-            let response = request.await?;
-            Ok(response)
-        });
-
-        async move { Ok(future.await?.boxed()) }.boxed()
-    }
 }
 
 impl LanguageModel for OpenCodeLanguageModel {
@@ -542,11 +509,9 @@ impl LanguageModel for OpenCodeLanguageModel {
 
     fn supports_tool_choice(&self, choice: LanguageModelToolChoice) -> bool {
         match choice {
-            LanguageModelToolChoice::Auto | LanguageModelToolChoice::Any => true,
-            LanguageModelToolChoice::None => {
-                // Google models don't support None tool choice
-                self.model.protocol() != ApiProtocol::Google
-            }
+            LanguageModelToolChoice::Auto
+            | LanguageModelToolChoice::Any
+            | LanguageModelToolChoice::None => true,
         }
     }
 
@@ -636,19 +601,6 @@ impl LanguageModel for OpenCodeLanguageModel {
                 async move {
                     let mapper = OpenAiResponseEventMapper::new();
                     Ok(mapper.map_stream(stream.await?).boxed())
-                }
-                .boxed()
-            }
-            ApiProtocol::Google => {
-                let google_request = into_google(
-                    request,
-                    self.model.id().to_string(),
-                    google_ai::GoogleModelMode::Default,
-                );
-                let stream = self.stream_google(google_request, http_client, cx);
-                async move {
-                    let mapper = GoogleEventMapper::new();
-                    Ok(mapper.map_stream(stream.await?.boxed()).boxed())
                 }
                 .boxed()
             }

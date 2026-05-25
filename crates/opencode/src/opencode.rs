@@ -1,6 +1,3 @@
-use anyhow::{Result, anyhow};
-use futures::{AsyncBufReadExt, AsyncReadExt, StreamExt, io::BufReader, stream::BoxStream};
-use http_client::{AsyncBody, HttpClient, Method, Request as HttpRequest};
 use language_model_core::ReasoningEffort;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
@@ -14,7 +11,6 @@ pub enum ApiProtocol {
     #[default]
     OpenAiResponses,
     OpenAiChat,
-    Google,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -90,14 +86,6 @@ pub enum Model {
     Gpt5Codex,
     #[serde(rename = "gpt-5-nano")]
     Gpt5Nano,
-
-    // -- Google protocol models --
-    #[serde(rename = "gemini-3.1-pro")]
-    Gemini3_1Pro,
-    #[serde(rename = "gemini-3-flash")]
-    Gemini3Flash,
-    #[serde(rename = "gemini-3.5-flash")]
-    Gemini3_5Flash,
 
     // -- OpenAI Chat Completions protocol models --
     #[serde(rename = "minimax-m2.5")]
@@ -203,10 +191,6 @@ impl Model {
             Self::Gpt5Codex => "gpt-5-codex",
             Self::Gpt5Nano => "gpt-5-nano",
 
-            Self::Gemini3_1Pro => "gemini-3.1-pro",
-            Self::Gemini3Flash => "gemini-3-flash",
-            Self::Gemini3_5Flash => "gemini-3.5-flash",
-
             Self::MiniMaxM2_5 => "minimax-m2.5",
             Self::Glm5 => "glm-5",
             Self::Glm5_1 => "glm-5.1",
@@ -244,10 +228,6 @@ impl Model {
             Self::Gpt5 => "GPT 5",
             Self::Gpt5Codex => "GPT 5 Codex",
             Self::Gpt5Nano => "GPT 5 Nano",
-
-            Self::Gemini3_1Pro => "Gemini 3.1 Pro",
-            Self::Gemini3Flash => "Gemini 3 Flash",
-            Self::Gemini3_5Flash => "Gemini 3.5 Flash",
 
             Self::MiniMaxM2_5 => "MiniMax M2.5",
             Self::Glm5 => "GLM 5",
@@ -292,8 +272,6 @@ impl Model {
             | Self::Gpt5
             | Self::Gpt5Codex
             | Self::Gpt5Nano => ApiProtocol::OpenAiResponses,
-
-            Self::Gemini3_1Pro | Self::Gemini3Flash | Self::Gemini3_5Flash => ApiProtocol::Google,
 
             Self::Glm5
             | Self::Glm5_1
@@ -345,11 +323,6 @@ impl Model {
             }
             Self::Gpt5 | Self::Gpt5Codex | Self::Gpt5Nano => 400_000,
 
-            // Google models
-            Self::Gemini3_1Pro => 1_048_576,
-            Self::Gemini3Flash => 1_048_576,
-            Self::Gemini3_5Flash => 1_048_576,
-
             // OpenAI-compatible models
             Self::MiniMaxM2_7 => 204_800,
             Self::MiniMaxM2_5 => 204_800,
@@ -392,9 +365,6 @@ impl Model {
             | Self::Gpt5
             | Self::Gpt5Codex
             | Self::Gpt5Nano => Some(128_000),
-
-            // Google models
-            Self::Gemini3_1Pro | Self::Gemini3Flash | Self::Gemini3_5Flash => Some(65_536),
 
             // OpenAI-compatible models
             Self::MiniMaxM2_7 => Some(131_072),
@@ -452,9 +422,6 @@ impl Model {
             // OpenAI models without image support
             Self::Gpt5_3Spark => false,
 
-            // Google models support images
-            Self::Gemini3_1Pro | Self::Gemini3Flash | Self::Gemini3_5Flash => true,
-
             // OpenAI-compatible models with image support
             Self::KimiK2_6
             | Self::KimiK2_5
@@ -474,7 +441,7 @@ impl Model {
 
             Self::Custom { protocol, .. } => matches!(
                 protocol,
-                ApiProtocol::OpenAiResponses | ApiProtocol::OpenAiChat | ApiProtocol::Google
+                ApiProtocol::OpenAiResponses | ApiProtocol::OpenAiChat
             ),
         }
     }
@@ -494,63 +461,5 @@ impl Model {
 
             _ => None,
         }
-    }
-}
-
-/// Stream generate content for Google models via OpenCode.
-///
-/// Unlike `google_ai::stream_generate_content()`, this uses:
-/// - `/v1/models/{model}` path (not `/v1beta/models/{model}`)
-/// - `Authorization: Bearer` header (not `key=` query param)
-pub async fn stream_generate_content(
-    client: &dyn HttpClient,
-    api_url: &str,
-    api_key: &str,
-    request: google_ai::GenerateContentRequest,
-) -> Result<BoxStream<'static, Result<google_ai::GenerateContentResponse>>> {
-    let api_key = api_key.trim();
-
-    let model_id = &request.model.model_id;
-
-    let uri = format!("{api_url}/v1/models/{model_id}:streamGenerateContent?alt=sse");
-
-    let request_builder = HttpRequest::builder()
-        .method(Method::POST)
-        .uri(uri)
-        .header("Content-Type", "application/json")
-        .header("Authorization", format!("Bearer {api_key}"));
-
-    let request = request_builder.body(AsyncBody::from(serde_json::to_string(&request)?))?;
-    let mut response = client.send(request).await?;
-    if response.status().is_success() {
-        let reader = BufReader::new(response.into_body());
-        Ok(reader
-            .lines()
-            .filter_map(|line| async move {
-                match line {
-                    Ok(line) => {
-                        if let Some(line) = line.strip_prefix("data: ") {
-                            match serde_json::from_str(line) {
-                                Ok(response) => Some(Ok(response)),
-                                Err(error) => {
-                                    Some(Err(anyhow!("Error parsing JSON: {error:?}\n{line:?}")))
-                                }
-                            }
-                        } else {
-                            None
-                        }
-                    }
-                    Err(error) => Some(Err(anyhow!(error))),
-                }
-            })
-            .boxed())
-    } else {
-        let mut text = String::new();
-        response.body_mut().read_to_string(&mut text).await?;
-        Err(anyhow!(
-            "error during streamGenerateContent via OpenCode, status code: {:?}, body: {}",
-            response.status(),
-            text
-        ))
     }
 }

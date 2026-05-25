@@ -11,19 +11,17 @@ use futures::{
     io::BufReader,
     stream::{self, BoxStream},
 };
-use google_ai::GoogleModelMode;
 use gpui::{AppContext, AsyncApp, Context, Task};
 use http_client::http::{HeaderMap, HeaderValue};
 use http_client::{
     AsyncBody, HttpClient, HttpClientWithUrl, HttpRequestExt, Method, Response, StatusCode,
 };
 use language_model::{
-    GOOGLE_PROVIDER_ID, GOOGLE_PROVIDER_NAME, LanguageModel, LanguageModelCompletionError,
-    LanguageModelCompletionEvent, LanguageModelEffortLevel, LanguageModelId, LanguageModelName,
-    LanguageModelProviderId, LanguageModelProviderName, LanguageModelRequest,
-    LanguageModelToolChoice, LanguageModelToolSchemaFormat, OPEN_AI_PROVIDER_ID,
-    OPEN_AI_PROVIDER_NAME, PaymentRequiredError, RateLimiter, ZED_CLOUD_PROVIDER_ID,
-    ZED_CLOUD_PROVIDER_NAME,
+    LanguageModel, LanguageModelCompletionError, LanguageModelCompletionEvent,
+    LanguageModelEffortLevel, LanguageModelId, LanguageModelName, LanguageModelProviderId,
+    LanguageModelProviderName, LanguageModelRequest, LanguageModelToolChoice,
+    LanguageModelToolSchemaFormat, OPEN_AI_PROVIDER_ID, OPEN_AI_PROVIDER_NAME,
+    PaymentRequiredError, RateLimiter, ZED_CLOUD_PROVIDER_ID, ZED_CLOUD_PROVIDER_NAME,
 };
 
 use schemars::JsonSchema;
@@ -37,7 +35,6 @@ use std::task::Poll;
 use std::time::Duration;
 use thiserror::Error;
 
-use google_ai::completion::{GoogleEventMapper, into_google};
 use open_ai::completion::{OpenAiResponseEventMapper, into_open_ai_response};
 
 const PROVIDER_ID: LanguageModelProviderId = ZED_CLOUD_PROVIDER_ID;
@@ -264,7 +261,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
         use cloud_llm_client::LanguageModelProvider::*;
         match self.model.provider {
             OpenAi => OPEN_AI_PROVIDER_ID,
-            Google => GOOGLE_PROVIDER_ID,
         }
     }
 
@@ -272,7 +268,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
         use cloud_llm_client::LanguageModelProvider::*;
         match self.model.provider {
             OpenAi => OPEN_AI_PROVIDER_NAME,
-            Google => GOOGLE_PROVIDER_NAME,
         }
     }
 
@@ -333,9 +328,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
         match self.model.provider {
             cloud_llm_client::LanguageModelProvider::OpenAi => {
                 LanguageModelToolSchemaFormat::JsonSchema
-            }
-            cloud_llm_client::LanguageModelProvider::Google => {
-                LanguageModelToolSchemaFormat::JsonSchemaSubset
             }
         }
     }
@@ -419,41 +411,6 @@ impl<TP: CloudLlmTokenProvider + 'static> LanguageModel for CloudLanguageModel<T
                     .await?;
 
                     let mut mapper = OpenAiResponseEventMapper::new();
-                    Ok(map_cloud_completion_events(
-                        Box::pin(response_lines(response, includes_status_messages)),
-                        &provider_name,
-                        move |event| mapper.map_event(event),
-                    ))
-                });
-                async move { Ok(future.await?.boxed()) }.boxed()
-            }
-            cloud_llm_client::LanguageModelProvider::Google => {
-                let http_client = self.http_client.clone();
-                let token_provider = self.token_provider.clone();
-                let request =
-                    into_google(request, self.model.id.to_string(), GoogleModelMode::Default);
-                let auth_context = token_provider.auth_context(cx);
-                let future = self.request_limiter.stream(async move {
-                    let PerformLlmCompletionResponse {
-                        response,
-                        includes_status_messages,
-                    } = Self::perform_llm_completion(
-                        &http_client,
-                        &*token_provider,
-                        auth_context,
-                        app_version,
-                        CompletionBody {
-                            thread_id,
-                            prompt_id,
-                            provider: cloud_llm_client::LanguageModelProvider::Google,
-                            model: request.model.model_id.clone(),
-                            provider_request: serde_json::to_value(&request)
-                                .map_err(|e| anyhow!(e))?,
-                        },
-                    )
-                    .await?;
-
-                    let mut mapper = GoogleEventMapper::new();
                     Ok(map_cloud_completion_events(
                         Box::pin(response_lines(response, includes_status_messages)),
                         &provider_name,
@@ -674,7 +631,6 @@ pub fn provider_name(
 ) -> LanguageModelProviderName {
     match provider {
         cloud_llm_client::LanguageModelProvider::OpenAi => OPEN_AI_PROVIDER_NAME,
-        cloud_llm_client::LanguageModelProvider::Google => GOOGLE_PROVIDER_NAME,
     }
 }
 

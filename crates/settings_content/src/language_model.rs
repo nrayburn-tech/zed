@@ -10,7 +10,6 @@ use std::sync::Arc;
 #[with_fallible_options]
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
 pub struct AllLanguageModelSettingsContent {
-    pub google: Option<GoogleSettingsContent>,
     pub lmstudio: Option<LmStudioSettingsContent>,
     pub mistral: Option<MistralSettingsContent>,
     pub ollama: Option<OllamaSettingsContent>,
@@ -245,22 +244,6 @@ impl Default for OpenAiCompatibleModelCapabilities {
 
 #[with_fallible_options]
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
-pub struct GoogleSettingsContent {
-    pub api_url: Option<String>,
-    pub available_models: Option<Vec<GoogleAvailableModel>>,
-}
-
-#[with_fallible_options]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom)]
-pub struct GoogleAvailableModel {
-    pub name: String,
-    pub display_name: Option<String>,
-    pub max_tokens: u64,
-    pub mode: Option<ModelMode>,
-}
-
-#[with_fallible_options]
-#[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
 pub struct ZedDotDevSettingsContent {
     pub available_models: Option<Vec<ZedDotDevAvailableModel>>,
 }
@@ -298,7 +281,6 @@ pub struct ZedDotDevAvailableModel {
 #[serde(rename_all = "lowercase")]
 pub enum ZedDotDevAvailableProvider {
     OpenAi,
-    Google,
 }
 
 #[with_fallible_options]

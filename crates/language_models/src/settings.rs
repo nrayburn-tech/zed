@@ -4,15 +4,13 @@ use collections::HashMap;
 use settings::RegisterSetting;
 
 use crate::provider::{
-    cloud::ZedDotDevSettings, google::GoogleSettings, lmstudio::LmStudioSettings,
-    mistral::MistralSettings, ollama::OllamaSettings, open_ai::OpenAiSettings,
-    open_ai_compatible::OpenAiCompatibleSettings, open_router::OpenRouterSettings,
-    opencode::OpenCodeSettings,
+    cloud::ZedDotDevSettings, lmstudio::LmStudioSettings, mistral::MistralSettings,
+    ollama::OllamaSettings, open_ai::OpenAiSettings, open_ai_compatible::OpenAiCompatibleSettings,
+    open_router::OpenRouterSettings, opencode::OpenCodeSettings,
 };
 
 #[derive(Debug, RegisterSetting)]
 pub struct AllLanguageModelSettings {
-    pub google: GoogleSettings,
     pub lmstudio: LmStudioSettings,
     pub mistral: MistralSettings,
     pub ollama: OllamaSettings,
@@ -28,7 +26,6 @@ impl settings::Settings for AllLanguageModelSettings {
 
     fn from_settings(content: &settings::SettingsContent) -> Self {
         let language_models = content.language_models.clone().unwrap();
-        let google = language_models.google.unwrap();
         let lmstudio = language_models.lmstudio.unwrap();
         let mistral = language_models.mistral.unwrap();
         let ollama = language_models.ollama.unwrap();
@@ -38,10 +35,6 @@ impl settings::Settings for AllLanguageModelSettings {
         let openai_compatible = language_models.openai_compatible.unwrap();
         let zed_dot_dev = language_models.zed_dot_dev.unwrap();
         Self {
-            google: GoogleSettings {
-                api_url: google.api_url.unwrap(),
-                available_models: google.available_models.unwrap_or_default(),
-            },
             lmstudio: LmStudioSettings {
                 api_url: lmstudio.api_url.unwrap(),
                 available_models: lmstudio.available_models.unwrap_or_default(),

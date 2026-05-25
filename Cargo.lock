@@ -289,7 +289,6 @@ dependencies = [
  "feature_flags",
  "fs",
  "futures 0.3.32",
- "google_ai",
  "gpui",
  "gpui_tokio",
  "http_client",
@@ -7560,21 +7559,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "google_ai"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures 0.3.32",
- "http_client",
- "language_model_core",
- "log",
- "schemars 1.0.4",
- "serde",
- "serde_json",
- "strum 0.27.2",
-]
-
-[[package]]
 name = "gpu-allocator"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9613,7 +9597,6 @@ dependencies = [
  "feature_flags",
  "fs",
  "futures 0.3.32",
- "google_ai",
  "gpui",
  "gpui_tokio",
  "http_client",
@@ -9654,7 +9637,6 @@ dependencies = [
  "anyhow",
  "cloud_llm_client",
  "futures 0.3.32",
- "google_ai",
  "gpui",
  "http_client",
  "language_model",
@@ -11868,7 +11850,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.32",
- "google_ai",
  "http_client",
  "language_model_core",
  "schemars 1.0.4",

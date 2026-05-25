@@ -2504,9 +2504,6 @@
     "anthropic": {
       "api_url": "https://api.anthropic.com"
     },
-    "google": {
-      "api_url": "https://generativelanguage.googleapis.com"
-    },
     "ollama": {
       "api_url": "http://localhost:11434"
     },

@@ -225,7 +225,6 @@ pub enum ModelVendor {
     // Azure OpenAI should have no functional difference from OpenAI in Copilot Chat
     #[serde(alias = "Azure OpenAI")]
     OpenAI,
-    Google,
     /// Unknown vendor that we don't explicitly support yet
     #[serde(other)]
     Unknown,
