@@ -45,7 +45,6 @@
 /crates/eval_utils/ @zed-industries/ai-team
 /crates/google_ai/ @zed-industries/ai-team
 /crates/language_model/ @zed-industries/ai-team
-/crates/language_models/ @zed-industries/ai-team
 /crates/lmstudio/ @zed-industries/ai-team
 /crates/ollama/ @zed-industries/ai-team
 /crates/open_ai/ @zed-industries/ai-team
