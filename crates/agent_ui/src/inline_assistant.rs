@@ -39,7 +39,7 @@ use language::{Buffer, Point, Selection, TransactionId};
 use language_model::{ConfigurationError, ConfiguredModel, LanguageModelRegistry};
 use multi_buffer::MultiBufferRow;
 use parking_lot::Mutex;
-use project::{DisableAiSettings, Project};
+use project::Project;
 use prompt_store::{PromptBuilder, PromptStore};
 use settings::{Settings, SettingsStore};
 
@@ -51,16 +51,6 @@ use zed_actions::agent::OpenSettings;
 
 pub fn init(fs: Arc<dyn Fs>, prompt_builder: Arc<PromptBuilder>, cx: &mut App) {
     cx.set_global(InlineAssistant::new(fs, prompt_builder));
-
-    cx.observe_global::<SettingsStore>(|cx| {
-        if DisableAiSettings::get_global(cx).disable_ai {
-            // Hide any active inline assist UI when AI is disabled
-            InlineAssistant::update_global(cx, |assistant, cx| {
-                assistant.cancel_all_active_completions(cx);
-            });
-        }
-    })
-    .detach();
 
     cx.observe_new(|_workspace: &mut Workspace, window, cx| {
         let Some(window) = window else {
@@ -153,26 +143,6 @@ impl InlineAssistant {
             }
         })
         .detach();
-    }
-
-    /// Hides all active inline assists when AI is disabled
-    pub fn cancel_all_active_completions(&mut self, cx: &mut App) {
-        // Cancel all active completions in editors
-        for (editor_handle, _) in self.assists_by_editor.iter() {
-            if let Some(editor) = editor_handle.upgrade() {
-                let windows = cx.windows();
-                if !windows.is_empty() {
-                    let window = windows[0];
-                    let _ = window.update(cx, |_, window, cx| {
-                        editor.update(cx, |editor, cx| {
-                            if editor.has_active_edit_prediction() {
-                                editor.cancel(&Default::default(), window, cx);
-                            }
-                        });
-                    });
-                }
-            }
-        }
     }
 
     fn handle_workspace_event(
@@ -1394,7 +1364,6 @@ impl InlineAssistant {
                     editor.disable_mouse_wheel_zoom();
                     editor.set_forbid_vertical_scroll(true);
                     editor.set_read_only(true);
-                    editor.set_show_edit_predictions(Some(false), window, cx);
                     editor.highlight_rows::<DeletedLines>(
                         Anchor::Min..Anchor::Max,
                         cx.theme().status().deleted_background,

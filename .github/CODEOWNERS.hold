@@ -33,13 +33,9 @@
 /crates/cloud_llm_client/ @zed-industries/ai-team
 /crates/context_server/ @zed-industries/ai-team
 /crates/copilot/ @zed-industries/ai-team
-/crates/copilot_chat/ @zed-industries/ai-team
 /crates/copilot_ui/ @zed-industries/ai-team
-/crates/edit_prediction/ @zed-industries/ai-team
-/crates/edit_prediction_cli/ @zed-industries/ai-team
 /crates/edit_prediction_context/ @zed-industries/ai-team
 /crates/edit_prediction_types/ @zed-industries/ai-team
-/crates/edit_prediction_ui/ @zed-industries/ai-team
 /crates/eval_utils/ @zed-industries/ai-team
 /crates/google_ai/ @zed-industries/ai-team
 /crates/language_model/ @zed-industries/ai-team

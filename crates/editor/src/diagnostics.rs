@@ -182,7 +182,6 @@ impl Editor {
             ])
         });
         self.activate_diagnostics(buffer_id, next_diagnostic, window, cx);
-        self.refresh_edit_prediction(false, true, window, cx);
     }
 
     #[cfg(any(test, feature = "test-support"))]

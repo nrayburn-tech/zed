@@ -59,13 +59,6 @@ pub struct OrganizationConfiguration {
     pub is_zed_model_provider_enabled: bool,
     pub is_agent_thread_feedback_enabled: bool,
     pub is_collaboration_enabled: bool,
-    pub edit_prediction: OrganizationEditPredictionConfiguration,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct OrganizationEditPredictionConfiguration {
-    pub is_enabled: bool,
-    pub is_feedback_enabled: bool,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -114,60 +107,4 @@ pub struct SubmitAgentThreadFeedbackCommentsBody {
     pub session_id: String,
     pub comments: String,
     pub thread: serde_json::Value,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct SubmitEditPredictionFeedbackBody {
-    pub organization_id: Option<OrganizationId>,
-    pub request_id: String,
-    pub rating: String,
-    pub inputs: serde_json::Value,
-    pub output: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub expected_output: Option<String>,
-    pub feedback: String,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct SubmitEditPredictionSettledBody {
-    pub request_id: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub settled_editable_region: Option<String>,
-    pub ts_error_count_before_prediction: usize,
-    pub ts_error_count_after_prediction: usize,
-    pub can_collect_data: bool,
-    pub is_in_open_source_repo: bool,
-    #[serde(flatten)]
-    pub kept_chars: EditPredictionSettledKeptChars,
-    pub example: Option<serde_json::Value>,
-    pub model_version: Option<String>,
-    #[serde(rename = "e2e_latency")]
-    pub e2e_latency_ms: u128,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct SubmitEditPredictionSettledResponse {}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct EditPredictionSettledKeptChars {
-    #[serde(rename = "edit_bytes_candidate_new")]
-    pub candidate_new: usize,
-    #[serde(rename = "edit_bytes_reference_new")]
-    pub reference_new: usize,
-    #[serde(rename = "edit_bytes_candidate_deleted")]
-    pub candidate_deleted: usize,
-    #[serde(rename = "edit_bytes_reference_deleted")]
-    pub reference_deleted: usize,
-    #[serde(rename = "edit_bytes_kept")]
-    pub kept: usize,
-    #[serde(rename = "edit_bytes_correctly_deleted")]
-    pub correctly_deleted: usize,
-    #[serde(rename = "edit_bytes_discarded")]
-    pub discarded: usize,
-    #[serde(rename = "edit_bytes_context")]
-    pub context: usize,
-    #[serde(rename = "edit_bytes_kept_rate")]
-    pub kept_rate: f64,
-    #[serde(rename = "edit_bytes_recall_rate")]
-    pub recall_rate: f64,
 }

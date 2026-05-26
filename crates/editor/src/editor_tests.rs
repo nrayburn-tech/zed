@@ -10733,11 +10733,6 @@ async fn test_undo_edit_prediction_scrolls_to_edit_pos(cx: &mut TestAppContext) 
         })
     });
 
-    cx.update_editor(|editor, window, cx| editor.update_visible_edit_prediction(window, cx));
-    cx.update_editor(|editor, window, cx| {
-        editor.accept_edit_prediction(&crate::AcceptEditPrediction, window, cx)
-    });
-
     cx.assert_editor_state(indoc! {"
         line 1
         line 2

@@ -1,5 +1,4 @@
 mod app_menus;
-pub mod edit_prediction_registry;
 #[cfg(target_os = "macos")]
 pub(crate) mod mac_only_instance;
 mod migrate;
@@ -529,22 +528,6 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
             }
         }
 
-        let edit_prediction_menu_handle = PopoverMenuHandle::default();
-        let edit_prediction_ui = cx.new(|cx| {
-            edit_prediction_ui::EditPredictionButton::new(
-                app_state.fs.clone(),
-                app_state.user_store.clone(),
-                edit_prediction_menu_handle.clone(),
-                workspace.project().clone(),
-                cx,
-            )
-        });
-        workspace.register_action({
-            move |_, _: &edit_prediction_ui::ToggleMenu, window, cx| {
-                edit_prediction_menu_handle.toggle(window, cx);
-            }
-        });
-
         let search_button = cx.new(|_| search::search_status_button::SearchButton::new());
         let diagnostic_summary =
             cx.new(|cx| diagnostics::items::DiagnosticIndicator::new(workspace, cx));
@@ -586,7 +569,6 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
             status_bar.add_left_item(active_file_name, window, cx);
             status_bar.add_left_item(merge_conflict_indicator, window, cx);
             status_bar.add_left_item(activity_indicator, window, cx);
-            status_bar.add_right_item(edit_prediction_ui, window, cx);
             status_bar.add_right_item(active_buffer_encoding, window, cx);
             status_bar.add_right_item(active_buffer_language, window, cx);
             status_bar.add_right_item(active_toolchain_language, window, cx);
@@ -5206,7 +5188,6 @@ mod tests {
                 "debugger",
                 "dev",
                 "diagnostics",
-                "edit_prediction",
                 "editor",
                 "encoding_selector",
                 "feedback",
@@ -5270,7 +5251,6 @@ mod tests {
                 "worktree_picker",
                 "zed",
                 "zed_actions",
-                "zed_predict_onboarding",
                 "zeta",
             ];
             assert_eq!(
@@ -5453,12 +5433,6 @@ mod tests {
             project_panel::init(cx);
             outline_panel::init(cx);
             terminal_view::init(cx);
-            copilot_chat::init(
-                app_state.fs.clone(),
-                app_state.client.http_client(),
-                copilot_chat::CopilotChatConfiguration::default(),
-                cx,
-            );
             image_viewer::init(cx);
             language_model::init(cx);
             client::RefreshLlmTokenListener::register(

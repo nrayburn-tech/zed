@@ -3537,8 +3537,6 @@ dependencies = [
  "async-std",
  "collections",
  "command_palette_hooks",
- "copilot_chat",
- "edit_prediction_types",
  "editor",
  "fs",
  "futures 0.3.32",
@@ -3563,24 +3561,6 @@ dependencies = [
  "util",
  "workspace",
  "zlog",
-]
-
-[[package]]
-name = "copilot_chat"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "collections",
- "dirs",
- "fs",
- "futures 0.3.32",
- "gpui",
- "http_client",
- "log",
- "paths",
- "serde",
- "serde_json",
- "settings",
 ]
 
 [[package]]
@@ -5128,227 +5108,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "edit_prediction"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "buffer_diff",
- "client",
- "clock",
- "cloud_api_client",
- "cloud_api_types",
- "cloud_llm_client",
- "collections",
- "copilot",
- "copilot_ui",
- "credentials_provider",
- "criterion",
- "ctor",
- "db",
- "edit_prediction_context",
- "edit_prediction_metrics",
- "edit_prediction_types",
- "feature_flags",
- "fs",
- "futures 0.3.32",
- "gpui",
- "heapless",
- "indoc",
- "itertools 0.14.0",
- "language",
- "language_model",
- "languages",
- "log",
- "lsp",
- "menu",
- "node_runtime",
- "open_ai",
- "parking_lot",
- "postage",
- "pretty_assertions",
- "project",
- "pulldown-cmark 0.13.0",
- "rand 0.9.4",
- "regex",
- "release_channel",
- "semver",
- "serde",
- "serde_json",
- "settings",
- "strum 0.27.2",
- "telemetry",
- "telemetry_events",
- "text",
- "thiserror 2.0.17",
- "time",
- "toml 0.8.23",
- "ui",
- "util",
- "uuid",
- "workspace",
- "worktree",
- "zed_actions",
- "zed_credentials_provider",
- "zeta_prompt",
- "zlog",
- "zstd",
-]
-
-[[package]]
-name = "edit_prediction_cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "client",
- "cloud_llm_client",
- "collections",
- "db",
- "debug_adapter_extension",
- "dirs",
- "edit_prediction",
- "edit_prediction_metrics",
- "extension",
- "flate2",
- "fs",
- "futures 0.3.32",
- "gaoya",
- "gpui",
- "gpui_platform",
- "gpui_tokio",
- "http_client",
- "indoc",
- "language",
- "language_extension",
- "language_model",
- "languages",
- "libc",
- "log",
- "node_runtime",
- "open_ai",
- "paths",
- "pretty_assertions",
- "project",
- "prompt_store",
- "rand 0.9.4",
- "release_channel",
- "reqwest_client",
- "rust-embed",
- "serde",
- "serde_json",
- "settings",
- "shellexpand",
- "similar",
- "smol",
- "sqlez",
- "sqlez_macros",
- "strum 0.27.2",
- "telemetry_events",
- "tempfile",
- "terminal_view",
- "toml 0.8.23",
- "util",
- "wasmtime",
- "watch",
- "workspace",
- "zeta_prompt",
-]
-
-[[package]]
-name = "edit_prediction_context"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clock",
- "collections",
- "env_logger 0.11.8",
- "futures 0.3.32",
- "gpui",
- "indoc",
- "language",
- "log",
- "lsp",
- "parking_lot",
- "pretty_assertions",
- "project",
- "serde",
- "serde_json",
- "settings",
- "smallvec",
- "text",
- "tree-sitter",
- "util",
- "zeta_prompt",
-]
-
-[[package]]
-name = "edit_prediction_metrics"
-version = "0.1.0"
-dependencies = [
- "imara-diff",
- "indoc",
- "pretty_assertions",
- "serde",
- "serde_json",
- "similar",
- "tree-sitter",
- "zeta_prompt",
-]
-
-[[package]]
-name = "edit_prediction_types"
-version = "0.1.0"
-dependencies = [
- "client",
- "gpui",
- "icons",
- "language",
- "text",
-]
-
-[[package]]
-name = "edit_prediction_ui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "buffer_diff",
- "client",
- "cloud_llm_client",
- "collections",
- "command_palette_hooks",
- "copilot",
- "copilot_chat",
- "copilot_ui",
- "edit_prediction",
- "edit_prediction_types",
- "editor",
- "feature_flags",
- "fs",
- "futures 0.3.32",
- "gpui",
- "indoc",
- "language",
- "markdown",
- "menu",
- "multi_buffer",
- "paths",
- "project",
- "regex",
- "settings",
- "telemetry",
- "text",
- "theme",
- "theme_settings",
- "time",
- "ui",
- "util",
- "workspace",
- "zed_actions",
- "zeta_prompt",
-]
-
-[[package]]
 name = "editor"
 version = "0.1.0"
 dependencies = [
@@ -5366,7 +5125,6 @@ dependencies = [
  "ctor",
  "dap",
  "db",
- "edit_prediction_types",
  "emojis",
  "feature_flags",
  "file_icons",
@@ -6571,12 +6329,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fuchsia-cprng"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
-
-[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6759,29 +6511,6 @@ dependencies = [
  "gpui",
  "nucleo",
  "util",
-]
-
-[[package]]
-name = "gaoya"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c75195ebd4c5589a505e1f0bf81052c52f55dfa40c1afefac1f95b67846adb1"
-dependencies = [
- "ahash 0.8.12",
- "crossbeam-utils",
- "fnv",
- "itertools 0.10.5",
- "num-traits",
- "rand 0.8.6",
- "rand_pcg",
- "random_choice",
- "rayon",
- "seahash",
- "sha-1",
- "shingles",
- "siphasher 0.3.11",
- "smallvec",
- "triomphe",
 ]
 
 [[package]]
@@ -9544,7 +9273,6 @@ dependencies = [
  "client",
  "collections",
  "command_palette_hooks",
- "edit_prediction",
  "editor",
  "futures 0.3.32",
  "gpui",
@@ -12738,7 +12466,7 @@ version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67eabc2ef2a60eb7faa00097bd1ffdb5bd28e62bf39990626a582201b7a754e5"
 dependencies = [
- "siphasher 1.0.1",
+ "siphasher",
 ]
 
 [[package]]
@@ -12747,7 +12475,7 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06005508882fb681fd97892ecff4b7fd0fee13ef1aa569f8695dae7ab9099981"
 dependencies = [
- "siphasher 1.0.1",
+ "siphasher",
 ]
 
 [[package]]
@@ -13871,29 +13599,6 @@ checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
 name = "rand"
-version = "0.3.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64ac302d8f83c0c1974bf758f6b041c6c8ada916fbb44a609158ca8b064cc76c"
-dependencies = [
- "libc",
- "rand 0.4.6",
-]
-
-[[package]]
-name = "rand"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "552840b97013b1a26992c11eac34bdd778e464601a4c2054b5f0bff7c6761293"
-dependencies = [
- "fuchsia-cprng",
- "libc",
- "rand_core 0.3.1",
- "rdrand",
- "winapi",
-]
-
-[[package]]
-name = "rand"
 version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ca0ecfa931c29007047d1bc58e623ab12e5590e8c7cc53200d5202b69266d8a"
@@ -13935,21 +13640,6 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a6fdeb83b075e8266dcc8762c22776f6877a63111121f5f8c7411e5be7eed4b"
-dependencies = [
- "rand_core 0.4.2",
-]
-
-[[package]]
-name = "rand_core"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c33a3c44ca05fa6f1807d8e6743f3824e8509beca625669633be0acbdf509dc"
-
-[[package]]
-name = "rand_core"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
@@ -13977,30 +13667,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "rand_pcg"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59cad018caf63deb318e5a4586d99a24424a364f40f1e5778c29aca23f4fc73e"
-dependencies = [
- "rand_core 0.6.4",
-]
-
-[[package]]
 name = "rand_xorshift"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "513962919efc330f829edb2535844d1b912b0fbe2ca165d613e4e8788bb05a5a"
 dependencies = [
  "rand_core 0.9.3",
-]
-
-[[package]]
-name = "random_choice"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09c8d23fe09a1d82566c84c9dfa810b0479c6dbbe190728274f68ee3a0c27dbf"
-dependencies = [
- "rand 0.3.23",
 ]
 
 [[package]]
@@ -14128,15 +13800,6 @@ checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
 dependencies = [
  "crossbeam-deque",
  "crossbeam-utils",
-]
-
-[[package]]
-name = "rdrand"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
-dependencies = [
- "rand_core 0.3.1",
 ]
 
 [[package]]
@@ -15984,8 +15647,6 @@ dependencies = [
  "copilot",
  "copilot_ui",
  "cpal",
- "edit_prediction",
- "edit_prediction_ui",
  "editor",
  "feature_flags",
  "fs",
@@ -16021,17 +15682,6 @@ dependencies = [
  "workspace",
  "zed_actions",
  "zed_credentials_provider",
-]
-
-[[package]]
-name = "sha-1"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5058ada175748e33390e40e872bd0fe59a19f265d0158daa551c5a88a76009c"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "digest",
 ]
 
 [[package]]
@@ -16102,12 +15752,6 @@ checksum = "8b1fdf65dd6331831494dd616b30351c38e96e45921a27745cf98490458b90bb"
 dependencies = [
  "dirs",
 ]
-
-[[package]]
-name = "shingles"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72bb884be1ddfbded5873be4672cf5aee71210ce0f8ae99787d158b9b72b5ca0"
 
 [[package]]
 name = "shlex"
@@ -16227,12 +15871,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
 
 [[package]]
-name = "similar"
-version = "2.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
-
-[[package]]
 name = "simple_asn1"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16263,12 +15901,6 @@ dependencies = [
  "termcolor",
  "time",
 ]
-
-[[package]]
-name = "siphasher"
-version = "0.3.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b58827f4464d87d377d175e90bf58eb00fd8716ff0a62f80356b5e61555d0d"
 
 [[package]]
 name = "siphasher"
@@ -17063,7 +16695,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68c7541fff44b35860c1a7a47a7cadf3e4a304c457b58f9870d9706ece028afc"
 dependencies = [
  "kurbo",
- "siphasher 1.0.1",
+ "siphasher",
 ]
 
 [[package]]
@@ -18769,16 +18401,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "triomphe"
-version = "0.1.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd69c5aa8f924c7519d6372789a74eac5b94fb0f8fcf0d4a97eb0bfc3e785f39"
-dependencies = [
- "serde",
- "stable_deref_trait",
-]
-
-[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -19142,7 +18764,7 @@ dependencies = [
  "roxmltree",
  "rustybuzz",
  "simplecss",
- "siphasher 1.0.1",
+ "siphasher",
  "strict-num",
  "svgtypes",
  "tiny-skia-path",
@@ -22243,7 +21865,6 @@ dependencies = [
  "component",
  "component_preview",
  "copilot",
- "copilot_chat",
  "copilot_ui",
  "crashes",
  "csv_preview",
@@ -22254,8 +21875,6 @@ dependencies = [
  "debugger_ui",
  "dev_container",
  "diagnostics",
- "edit_prediction",
- "edit_prediction_ui",
  "editor",
  "encoding_selector",
  "env_logger 0.11.8",

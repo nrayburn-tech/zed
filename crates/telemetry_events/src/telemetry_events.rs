@@ -101,12 +101,6 @@ pub struct FlexibleEvent {
     pub event_properties: HashMap<String, serde_json::Value>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-pub enum EditPredictionRating {
-    Positive,
-    Negative,
-}
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AssistantEventData {
     /// Unique random identifier for each assistant tab (None for inline assist)

@@ -1,33 +1,22 @@
-mod copilot_edit_prediction_delegate;
 pub mod request;
 
-use crate::request::{
-    DidFocus, DidFocusParams, FormattingOptions, InlineCompletionContext,
-    InlineCompletionTriggerKind, InlineCompletions, NextEditSuggestions,
-};
+use crate::request::{DidFocus, DidFocusParams};
 use ::fs::Fs;
 use anyhow::{Context as _, Result, anyhow};
 use collections::{HashMap, HashSet};
 use command_palette_hooks::CommandPaletteFilter;
-use futures::future;
-use futures::{Future, FutureExt, TryFutureExt, channel::oneshot, future::Shared, select_biased};
+use futures::{Future, FutureExt, TryFutureExt, channel::oneshot, future::Shared};
 use gpui::{
     App, AppContext as _, AsyncApp, Context, Entity, EntityId, EventEmitter, Global, Subscription,
     Task, WeakEntity, actions,
 };
-use language::language_settings::{AllLanguageSettings, CopilotSettings};
-use language::{
-    Anchor, Bias, Buffer, BufferSnapshot, Language, PointUtf16, ToPointUtf16,
-    language_settings::{EditPredictionProvider, all_language_settings},
-    point_from_lsp, point_to_lsp,
-};
+use language::{Anchor, Buffer, BufferSnapshot, Language, PointUtf16, point_to_lsp};
 use lsp::{LanguageServer, LanguageServerBinary, LanguageServerId, LanguageServerName};
 use node_runtime::{NodeRuntime, VersionStrategy};
 use parking_lot::Mutex;
 use project::project_settings::ProjectSettings;
 use project::{DisableAiSettings, Project};
 use request::DidChangeStatus;
-use serde_json::json;
 use settings::{Settings, SettingsStore};
 use std::{
     any::TypeId,
@@ -42,8 +31,6 @@ use std::{
 use sum_tree::Dimensions;
 use util::{ResultExt, fs::remove_matching};
 use workspace::AppState;
-
-pub use crate::copilot_edit_prediction_delegate::CopilotEditPredictionDelegate;
 
 actions!(
     copilot,
@@ -305,23 +292,6 @@ impl GlobalCopilotAuth {
 }
 impl Global for GlobalCopilotAuth {}
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum CompletionSource {
-    NextEditSuggestion,
-    InlineCompletion,
-}
-
-/// Copilot's NextEditSuggestion response, with coordinates converted to Anchors.
-#[derive(Clone)]
-pub(crate) struct CopilotEditPrediction {
-    pub(crate) buffer: Entity<Buffer>,
-    pub(crate) range: Range<Anchor>,
-    pub(crate) text: String,
-    pub(crate) command: Option<lsp::Command>,
-    pub(crate) snapshot: BufferSnapshot,
-    pub(crate) source: CompletionSource,
-}
-
 impl Copilot {
     pub fn new(
         project: Option<Entity<Project>>,
@@ -390,7 +360,7 @@ impl Copilot {
             buffers: Default::default(),
             _subscriptions,
         };
-        this.start_copilot(true, false, cx);
+        this.start_copilot(false, cx);
         cx.observe_global::<SettingsStore>(move |this, cx| {
             let ai_disabled = DisableAiSettings::get_global(cx).disable_ai;
 
@@ -415,12 +385,7 @@ impl Copilot {
                 }
             } else {
                 // Only start if AI is enabled
-                this.start_copilot(true, false, cx);
-                if let Ok(server) = this.server.as_running() {
-                    notify_did_change_config_to_server(&server.lsp, cx)
-                        .context("copilot setting change: did change configuration")
-                        .log_err();
-                }
+                this.start_copilot(false, cx);
             }
             this.update_action_visibilities(cx);
         })
@@ -448,28 +413,17 @@ impl Copilot {
         }
     }
 
-    pub fn start_copilot(
-        &mut self,
-        check_edit_prediction_provider: bool,
-        awaiting_sign_in_after_start: bool,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn start_copilot(&mut self, awaiting_sign_in_after_start: bool, cx: &mut Context<Self>) {
         if DisableAiSettings::get_global(cx).disable_ai {
             return;
         }
         if !matches!(self.server, CopilotServer::Disabled) {
             return;
         }
-        let language_settings = all_language_settings(None, cx);
-        if check_edit_prediction_provider
-            && language_settings.edit_predictions.provider != EditPredictionProvider::Copilot
-        {
-            return;
-        }
         let server_id = self.server_id;
         let fs = self.fs.clone();
         let node_runtime = self.node_runtime.clone();
-        let env = self.build_env(&language_settings.edit_predictions.copilot);
+        let env = self.build_env();
         let start_task = cx
             .spawn(async move |this, cx| {
                 Self::start_language_server(
@@ -488,34 +442,8 @@ impl Copilot {
         cx.notify();
     }
 
-    fn build_env(&self, copilot_settings: &CopilotSettings) -> Option<HashMap<String, String>> {
-        let proxy_url = copilot_settings.proxy.clone()?;
-        let no_verify = copilot_settings.proxy_no_verify;
-        let http_or_https_proxy = if proxy_url.starts_with("http:") {
-            Some("HTTP_PROXY")
-        } else if proxy_url.starts_with("https:") {
-            Some("HTTPS_PROXY")
-        } else {
-            log::error!(
-                "Unsupported protocol scheme for language server proxy (must be http or https)"
-            );
-            None
-        };
-
-        let mut env = HashMap::default();
-
-        if let Some(proxy_type) = http_or_https_proxy {
-            env.insert(proxy_type.to_string(), proxy_url);
-            if let Some(true) = no_verify {
-                env.insert("NODE_TLS_REJECT_UNAUTHORIZED".to_string(), "0".to_string());
-            };
-        }
-
-        if let Ok(oauth_token) = env::var(copilot_chat::COPILOT_OAUTH_ENV_VAR) {
-            env.insert(copilot_chat::COPILOT_OAUTH_ENV_VAR.to_string(), oauth_token);
-        }
-
-        if env.is_empty() { None } else { Some(env) }
+    fn build_env(&self) -> Option<HashMap<String, String>> {
+        None
     }
 
     #[cfg(any(test, feature = "test-support"))]
@@ -685,9 +613,6 @@ impl Copilot {
                 })
                 .await?;
 
-            this.update(cx, |_, cx| notify_did_change_config_to_server(&server, cx))?
-                .context("copilot: did change configuration")?;
-
             let status = server
                 .request::<request::CheckStatus>(
                     request::CheckStatusParams {
@@ -836,17 +761,12 @@ impl Copilot {
                     anyhow::Ok(())
                 })
             }
-            CopilotServer::Disabled => cx.background_spawn(async {
-                clear_copilot_config_dir().await;
-                anyhow::Ok(())
-            }),
             _ => Task::ready(Err(anyhow!("copilot hasn't started yet"))),
         }
     }
 
     pub fn reinstall(&mut self, cx: &mut Context<Self>) -> Shared<Task<()>> {
-        let language_settings = all_language_settings(None, cx);
-        let env = self.build_env(&language_settings.edit_predictions.copilot);
+        let env = self.build_env();
         let start_task = cx
             .spawn({
                 let fs = self.fs.clone();
@@ -1014,215 +934,6 @@ impl Copilot {
         }
     }
 
-    pub(crate) fn completions(
-        &mut self,
-        buffer: &Entity<Buffer>,
-        position: Anchor,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<Vec<CopilotEditPrediction>>> {
-        self.register_buffer(buffer, cx);
-
-        let server = match self.server.as_authenticated() {
-            Ok(server) => server,
-            Err(error) => return Task::ready(Err(error)),
-        };
-        let buffer_entity = buffer.clone();
-        let lsp = server.lsp.clone();
-        let Some(registered_buffer) = server.registered_buffers.get_mut(&buffer.entity_id()) else {
-            return Task::ready(Err(anyhow::anyhow!("buffer not registered")));
-        };
-        let pending_snapshot = registered_buffer.report_changes(buffer, cx);
-        let buffer = buffer.read(cx);
-        let uri = registered_buffer.uri.clone();
-        let position = position.to_point_utf16(buffer);
-        let snapshot = buffer.snapshot();
-        let settings = snapshot.settings_at(0, cx);
-        let tab_size = settings.tab_size.get();
-        let hard_tabs = settings.hard_tabs;
-        drop(settings);
-
-        let request_timeout = ProjectSettings::get_global(cx)
-            .global_lsp_settings
-            .get_request_timeout();
-
-        let nes_enabled = AllLanguageSettings::get_global(cx)
-            .edit_predictions
-            .copilot
-            .enable_next_edit_suggestions
-            .unwrap_or(true);
-
-        cx.background_spawn(async move {
-            let (version, snapshot) = pending_snapshot.await?;
-            let lsp_position = point_to_lsp(position);
-
-            let nes_fut = if nes_enabled {
-                lsp.request::<NextEditSuggestions>(
-                    request::NextEditSuggestionsParams {
-                        text_document: lsp::VersionedTextDocumentIdentifier {
-                            uri: uri.clone(),
-                            version,
-                        },
-                        position: lsp_position,
-                    },
-                    request_timeout,
-                )
-                .map(|resp| {
-                    resp.into_response()
-                        .ok()
-                        .map(|result| {
-                            result
-                                .edits
-                                .into_iter()
-                                .map(|completion| {
-                                    let start = snapshot.clip_point_utf16(
-                                        point_from_lsp(completion.range.start),
-                                        Bias::Left,
-                                    );
-                                    let end = snapshot.clip_point_utf16(
-                                        point_from_lsp(completion.range.end),
-                                        Bias::Left,
-                                    );
-                                    CopilotEditPrediction {
-                                        buffer: buffer_entity.clone(),
-                                        range: snapshot.anchor_before(start)
-                                            ..snapshot.anchor_after(end),
-                                        text: completion.text,
-                                        command: completion.command,
-                                        snapshot: snapshot.clone(),
-                                        source: CompletionSource::NextEditSuggestion,
-                                    }
-                                })
-                                .collect::<Vec<_>>()
-                        })
-                        .unwrap_or_default()
-                })
-                .left_future()
-                .fuse()
-            } else {
-                future::ready(Vec::<CopilotEditPrediction>::new())
-                    .right_future()
-                    .fuse()
-            };
-
-            let inline_fut = lsp
-                .request::<InlineCompletions>(
-                    request::InlineCompletionsParams {
-                        text_document: lsp::VersionedTextDocumentIdentifier {
-                            uri: uri.clone(),
-                            version,
-                        },
-                        position: lsp_position,
-                        context: InlineCompletionContext {
-                            trigger_kind: InlineCompletionTriggerKind::Automatic,
-                        },
-                        formatting_options: Some(FormattingOptions {
-                            tab_size,
-                            insert_spaces: !hard_tabs,
-                        }),
-                    },
-                    request_timeout,
-                )
-                .map(|resp| {
-                    resp.into_response()
-                        .ok()
-                        .map(|result| {
-                            result
-                                .items
-                                .into_iter()
-                                .map(|item| {
-                                    let start = snapshot.clip_point_utf16(
-                                        point_from_lsp(item.range.start),
-                                        Bias::Left,
-                                    );
-                                    let end = snapshot.clip_point_utf16(
-                                        point_from_lsp(item.range.end),
-                                        Bias::Left,
-                                    );
-                                    CopilotEditPrediction {
-                                        buffer: buffer_entity.clone(),
-                                        range: snapshot.anchor_before(start)
-                                            ..snapshot.anchor_after(end),
-                                        text: item.insert_text,
-                                        command: item.command,
-                                        snapshot: snapshot.clone(),
-                                        source: CompletionSource::InlineCompletion,
-                                    }
-                                })
-                                .collect::<Vec<_>>()
-                        })
-                        .unwrap_or_default()
-                })
-                .fuse();
-
-            futures::pin_mut!(nes_fut, inline_fut);
-
-            let mut nes_result: Option<Vec<CopilotEditPrediction>> = None;
-            let mut inline_result: Option<Vec<CopilotEditPrediction>> = None;
-
-            loop {
-                select_biased! {
-                    nes = nes_fut => {
-                        if !nes.is_empty() {
-                            return Ok(nes);
-                        }
-                        nes_result = Some(nes);
-                    }
-                    inline = inline_fut => {
-                        if !inline.is_empty() {
-                            return Ok(inline);
-                        }
-                        inline_result = Some(inline);
-                    }
-                    complete => break,
-                }
-
-                if let (Some(nes), Some(inline)) = (&nes_result, &inline_result) {
-                    return if !nes.is_empty() {
-                        Ok(nes.clone())
-                    } else {
-                        Ok(inline.clone())
-                    };
-                }
-            }
-
-            Ok(nes_result.or(inline_result).unwrap_or_default())
-        })
-    }
-
-    pub(crate) fn accept_completion(
-        &mut self,
-        completion: &CopilotEditPrediction,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<()>> {
-        let server = match self.server.as_authenticated() {
-            Ok(server) => server,
-            Err(error) => return Task::ready(Err(error)),
-        };
-        if let Some(command) = &completion.command {
-            let request_timeout = ProjectSettings::get_global(cx)
-                .global_lsp_settings
-                .get_request_timeout();
-
-            let request = server.lsp.request::<lsp::ExecuteCommand>(
-                lsp::ExecuteCommandParams {
-                    command: command.command.clone(),
-                    arguments: command.arguments.clone().unwrap_or_default(),
-                    ..Default::default()
-                },
-                request_timeout,
-            );
-            cx.background_spawn(async move {
-                request
-                    .await
-                    .into_response()
-                    .context("copilot: notify accepted")?;
-                Ok(())
-            })
-        } else {
-            Task::ready(Ok(()))
-        }
-    }
-
     pub fn status(&self) -> Status {
         match &self.server {
             CopilotServer::Starting { task } => Status::Starting { task: task.clone() },
@@ -1343,50 +1054,8 @@ fn uri_for_buffer(buffer: &Entity<Buffer>, cx: &App) -> Result<lsp::Uri, ()> {
     }
 }
 
-fn notify_did_change_config_to_server(
-    server: &Arc<LanguageServer>,
-    cx: &mut Context<Copilot>,
-) -> std::result::Result<(), anyhow::Error> {
-    let copilot_settings = all_language_settings(None, cx)
-        .edit_predictions
-        .copilot
-        .clone();
-
-    if let Some(copilot_chat) = copilot_chat::CopilotChat::global(cx) {
-        copilot_chat.update(cx, |chat, cx| {
-            chat.set_configuration(
-                copilot_chat::CopilotChatConfiguration {
-                    enterprise_uri: copilot_settings.enterprise_uri.clone(),
-                },
-                cx,
-            );
-        });
-    }
-
-    let settings = json!({
-        "http": {
-            "proxy": copilot_settings.proxy,
-            "proxyStrictSSL": !copilot_settings.proxy_no_verify.unwrap_or(false)
-        },
-        "github-enterprise": {
-            "uri": copilot_settings.enterprise_uri
-        }
-    });
-
-    server
-        .notify::<lsp::notification::DidChangeConfiguration>(lsp::DidChangeConfigurationParams {
-            settings,
-        })
-        .ok();
-    Ok(())
-}
-
 async fn clear_copilot_dir() {
     remove_matching(paths::copilot_dir(), |_| true).await
-}
-
-async fn clear_copilot_config_dir() {
-    remove_matching(copilot_chat::copilot_chat_config_dir(), |_| true).await
 }
 
 async fn get_copilot_lsp(fs: Arc<dyn Fs>, node_runtime: NodeRuntime) -> anyhow::Result<PathBuf> {
@@ -1490,7 +1159,7 @@ mod tests {
 
         // Try to start copilot - it should remain disabled
         copilot.update(cx, |copilot, cx| {
-            copilot.start_copilot(false, false, cx);
+            copilot.start_copilot(false, cx);
         });
 
         // Verify the server is still disabled
@@ -1843,9 +1512,8 @@ mod tests {
         });
 
         // Try to start - should fail because AI is disabled
-        // Use check_edit_prediction_provider=false to skip provider check
         copilot.update(cx, |copilot, cx| {
-            copilot.start_copilot(false, false, cx);
+            copilot.start_copilot(false, cx);
         });
 
         copilot.read_with(cx, |copilot, _| {
@@ -1862,7 +1530,7 @@ mod tests {
 
         // Try to start again - should work now
         copilot.update(cx, |copilot, cx| {
-            copilot.start_copilot(false, false, cx);
+            copilot.start_copilot(false, cx);
         });
 
         copilot.read_with(cx, |copilot, _| {

@@ -4,25 +4,24 @@
 
 - [Getting Started](./getting-started.md)
 - [Installation](./installation.md)
-  - [Update](./update.md)
-  - [Uninstall](./uninstall.md)
+    - [Update](./update.md)
+    - [Uninstall](./uninstall.md)
 - [Troubleshooting](./troubleshooting.md)
 
 # AI
 
 - [Overview](./ai/overview.md)
 - [Agent Panel](./ai/agent-panel.md)
-  - [Tools](./ai/tools.md)
-  - [Tool Permissions](./ai/tool-permissions.md)
-  - [External Agents](./ai/external-agents.md)
+    - [Tools](./ai/tools.md)
+    - [Tool Permissions](./ai/tool-permissions.md)
+    - [External Agents](./ai/external-agents.md)
 - [Parallel Agents](./ai/parallel-agents.md)
 - [Inline Assistant](./ai/inline-assistant.md)
-- [Edit Prediction](./ai/edit-prediction.md)
 - [Skills](./ai/skills.md)
 - [Rules](./ai/rules.md)
 - [Model Context Protocol](./ai/mcp.md)
 - [Configuration](./ai/configuration.md)
-  - [Agent Settings](./ai/agent-settings.md)
+    - [Agent Settings](./ai/agent-settings.md)
 - [Models](./ai/models.md)
 - [Providers](./ai/llm-providers.md)
 
@@ -30,28 +29,28 @@
 
 - [Windows & Projects](./windows-and-projects.md)
 - [Editing Code](./editing-code.md)
-  - [Code Completions](./completions.md)
-  - [Snippets](./snippets.md)
-  - [Diagnostics & Quick Fixes](./diagnostics.md)
-  - [Multibuffers](./multibuffers.md)
+    - [Code Completions](./completions.md)
+    - [Snippets](./snippets.md)
+    - [Diagnostics & Quick Fixes](./diagnostics.md)
+    - [Multibuffers](./multibuffers.md)
 - [Finding & Navigating](./finding-navigating.md)
-  - [Command Palette](./command-palette.md)
-  - [Outline Panel](./outline-panel.md)
-  - [Project Panel](./project-panel.md)
-  - [Tab Switcher](./tab-switcher.md)
+    - [Command Palette](./command-palette.md)
+    - [Outline Panel](./outline-panel.md)
+    - [Project Panel](./project-panel.md)
+    - [Tab Switcher](./tab-switcher.md)
 - [Running & Testing](./running-testing.md)
-  - [Terminal](./terminal.md)
-  - [Tasks](./tasks.md)
-  - [Debugger](./debugger.md)
-  - [REPL](./repl.md)
+    - [Terminal](./terminal.md)
+    - [Tasks](./tasks.md)
+    - [Debugger](./debugger.md)
+    - [REPL](./repl.md)
 - [Git](./git.md)
 - [Modelines](./modelines.md)
 
 # Collaboration
 
 - [Overview](./collaboration/overview.md)
-  - [Channels](./collaboration/channels.md)
-  - [Contacts and Private Calls](./collaboration/contacts-and-private-calls.md)
+    - [Channels](./collaboration/channels.md)
+    - [Contacts and Private Calls](./collaboration/contacts-and-private-calls.md)
 
 # Remote Development
 
@@ -76,8 +75,8 @@
 # Privacy & Security
 
 - [Overview](./ai/privacy-and-security.md)
-  - [Worktree Trust](./worktree-trust.md)
-  - [AI Improvement](./ai/ai-improvement.md)
+    - [Worktree Trust](./worktree-trust.md)
+    - [AI Improvement](./ai/ai-improvement.md)
 - [Privacy for Business](./business/privacy.md)
 - [Telemetry](./telemetry.md)
 - [SOC2](./soc2.md)
@@ -91,19 +90,19 @@
 # Customization
 
 - [Appearance](./appearance.md)
-  - [Themes](./themes.md)
-  - [Icon Themes](./icon-themes.md)
-  - [Fonts & Visual Tweaks](./visual-customization.md)
+    - [Themes](./themes.md)
+    - [Icon Themes](./icon-themes.md)
+    - [Fonts & Visual Tweaks](./visual-customization.md)
 - [Keybindings](./key-bindings.md)
-  - [Vim Mode](./vim.md)
-  - [Helix Mode](./helix.md)
+    - [Vim Mode](./vim.md)
+    - [Helix Mode](./helix.md)
 
 # Language Support
 
 - [All Languages](./languages.md)
 - [Configuring Languages](./configuring-languages.md)
-  - [Toolchains](./toolchains.md)
-  - [Semantic Tokens](./semantic-tokens.md)
+    - [Toolchains](./toolchains.md)
+    - [Semantic Tokens](./semantic-tokens.md)
 - [Ansible](./languages/ansible.md)
 - [AsciiDoc](./languages/asciidoc.md)
 - [Astro](./languages/astro.md)
@@ -207,12 +206,12 @@
 # Developing Zed
 
 - [Developing Zed](./development.md)
-  - [macOS](./development/macos.md)
-  - [Linux](./development/linux.md)
-  - [Windows](./development/windows.md)
-  - [FreeBSD](./development/freebsd.md)
-  - [Using Debuggers](./development/debuggers.md)
-  - [Performance](./performance.md)
-  - [Glossary](./development/glossary.md)
+    - [macOS](./development/macos.md)
+    - [Linux](./development/linux.md)
+    - [Windows](./development/windows.md)
+    - [FreeBSD](./development/freebsd.md)
+    - [Using Debuggers](./development/debuggers.md)
+    - [Performance](./performance.md)
+    - [Glossary](./development/glossary.md)
 - [Release Notes](./development/release-notes.md)
 - [Debugging Crashes](./development/debugging-crashes.md)

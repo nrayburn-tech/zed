@@ -257,12 +257,6 @@ pub fn make_get_authenticated_user_response(
         plan: PlanInfo {
             plan: KnownOrUnknown::Known(Plan::ZedPro),
             subscription_period: None,
-            usage: CurrentUsage {
-                edit_predictions: UsageData {
-                    used: 250,
-                    limit: UsageLimit::Unlimited,
-                },
-            },
             trial_started_at: None,
             is_account_too_young: false,
             has_overdue_invoices: false,

@@ -44,14 +44,6 @@ pub fn ai_privacy_and_security(cx: &App) -> String {
     )
 }
 
-/// Returns the URL to Zed's edit prediction documentation.
-pub fn edit_prediction_docs(cx: &App) -> String {
-    format!(
-        "{server_url}/docs/ai/edit-prediction",
-        server_url = server_url(cx)
-    )
-}
-
 pub fn skills_docs(cx: &App) -> String {
     format!("{server_url}/docs/ai/skills", server_url = server_url(cx))
 }

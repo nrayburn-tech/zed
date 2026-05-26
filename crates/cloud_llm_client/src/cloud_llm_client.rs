@@ -1,6 +1,3 @@
-#[cfg(feature = "predict-edits")]
-pub mod predict_edits_v3;
-
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -29,14 +26,6 @@ pub const EXPIRED_LLM_TOKEN_HEADER_NAME: &str = "x-zed-expired-token";
 /// An outdated token means the token's structure is incompatible with the current server expectations.
 pub const OUTDATED_LLM_TOKEN_HEADER_NAME: &str = "x-zed-outdated-token";
 
-/// The name of the header used to indicate the usage limit for edit predictions.
-pub const EDIT_PREDICTIONS_USAGE_LIMIT_HEADER_NAME: &str = "x-zed-edit-predictions-usage-limit";
-
-/// The name of the header used to indicate the usage amount for edit predictions.
-pub const EDIT_PREDICTIONS_USAGE_AMOUNT_HEADER_NAME: &str = "x-zed-edit-predictions-usage-amount";
-
-pub const EDIT_PREDICTIONS_RESOURCE_HEADER_VALUE: &str = "edit_predictions";
-
 /// The name of the header used to indicate the minimum required Zed version.
 ///
 /// This can be used to force a Zed upgrade in order to continue communicating
@@ -54,9 +43,6 @@ pub const CLIENT_SUPPORTS_STATUS_STREAM_ENDED_HEADER_NAME: &str =
 /// The name of the header used by the server to indicate to the client that it supports sending status messages.
 pub const SERVER_SUPPORTS_STATUS_MESSAGES_HEADER_NAME: &str =
     "x-zed-server-supports-status-messages";
-
-/// The maximum number of edit predictions that can be rejected per request.
-pub const MAX_EDIT_PREDICTION_REJECTIONS_PER_REQUEST: usize = 100;
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -86,111 +72,6 @@ impl FromStr for UsageLimit {
 #[strum(serialize_all = "snake_case")]
 pub enum LanguageModelProvider {
     OpenAi,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PredictEditsBody {
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub outline: Option<String>,
-    pub input_events: String,
-    pub input_excerpt: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub speculated_output: Option<String>,
-    /// Whether the user provided consent for sampling this interaction.
-    #[serde(default, alias = "data_collection_permission")]
-    pub can_collect_data: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub diagnostic_groups: Option<Vec<(String, serde_json::Value)>>,
-    /// Info about the git repository state, only present when can_collect_data is true.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub git_info: Option<PredictEditsGitInfo>,
-    /// The trigger for this request.
-    #[serde(default)]
-    pub trigger: PredictEditsRequestTrigger,
-}
-
-#[derive(
-    Default, Debug, Clone, Copy, Serialize, Deserialize, strum::AsRefStr, strum::EnumString,
-)]
-#[strum(serialize_all = "snake_case")]
-pub enum PredictEditsRequestTrigger {
-    Testing,
-    Diagnostics,
-    Cli,
-    #[default]
-    Other,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PredictEditsGitInfo {
-    /// SHA of git HEAD commit at time of prediction.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub head_sha: Option<String>,
-    /// URL of the remote called `origin`.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub remote_origin_url: Option<String>,
-    /// URL of the remote called `upstream`.
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub remote_upstream_url: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PredictEditsResponse {
-    pub request_id: String,
-    pub output_excerpt: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AcceptEditPredictionBody {
-    pub request_id: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub model_version: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub e2e_latency_ms: Option<u128>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct RejectEditPredictionsBody {
-    pub rejections: Vec<EditPredictionRejection>,
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub struct RejectEditPredictionsBodyRef<'a> {
-    pub rejections: &'a [EditPredictionRejection],
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct EditPredictionRejection {
-    pub request_id: String,
-    #[serde(default)]
-    pub reason: EditPredictionRejectReason,
-    pub was_shown: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub model_version: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub e2e_latency_ms: Option<u128>,
-}
-
-#[derive(
-    Default, Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, strum::AsRefStr,
-)]
-#[strum(serialize_all = "snake_case")]
-pub enum EditPredictionRejectReason {
-    /// New requests were triggered before this one completed
-    Canceled,
-    /// No edits returned
-    Empty,
-    /// Edits returned, but none remained after interpolation
-    InterpolatedEmpty,
-    /// The new prediction was preferred over the current one
-    Replaced,
-    /// The current prediction was preferred over the new one
-    CurrentPreferred,
-    /// The current prediction was discarded
-    #[default]
-    Discarded,
-    /// The current prediction was explicitly rejected by the user
-    Rejected,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -310,17 +191,6 @@ pub struct ListModelsResponse {
     pub default_model: Option<LanguageModelId>,
     pub default_fast_model: Option<LanguageModelId>,
     pub recommended_models: Vec<LanguageModelId>,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct CurrentUsage {
-    pub edit_predictions: UsageData,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct UsageData {
-    pub used: u32,
-    pub limit: UsageLimit,
 }
 
 #[cfg(test)]

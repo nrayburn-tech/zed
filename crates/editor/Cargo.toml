@@ -53,7 +53,6 @@ fs.workspace = true
 git.workspace = true
 gpui.workspace = true
 indoc.workspace = true
-edit_prediction_types.workspace = true
 itertools.workspace = true
 language.workspace = true
 linkify.workspace = true
@@ -110,7 +109,7 @@ criterion.workspace = true
 ctor.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
 language = { workspace = true, features = ["test-support"] }
-languages = {workspace = true, features = ["test-support"] }
+languages = { workspace = true, features = ["test-support"] }
 lsp = { workspace = true, features = ["test-support"] }
 markdown = { workspace = true, features = ["test-support"] }
 multi_buffer = { workspace = true, features = ["test-support"] }

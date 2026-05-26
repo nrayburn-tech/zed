@@ -422,7 +422,6 @@ impl JsonSchema for LanguageModelProviderSetting {
                 {
                     "type": "string",
                     "enum": [
-                        "copilot_chat",
                         "lmstudio",
                         "ollama",
                         "openai",
